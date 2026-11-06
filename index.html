@@ -275,7 +275,7 @@
   #deathStat { color: #d6453c; font-size: 22px; letter-spacing: 4px; margin-top: 22px; }
 </style>
 <script type="importmap">
-{ "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js" } }
+{ "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/" } }
 </script>
 </head>
 <body>
@@ -2824,6 +2824,136 @@ const zombieHurt = new THREE.MeshStandardMaterial({ vertexColors: true, roughnes
 const zombieEyes = new THREE.MeshBasicMaterial({ color: 0xd9e06a }); // a faint sick glow in the dark
 const bloodPoolMat = new THREE.MeshStandardMaterial({ color: 0x3a0606, roughness: 0.25 }); // wet: catches the muzzle flash
 
+// --- animated 3D zombie (assets/models/zombie.glb, CC0 Quaternius "Ultimate Animated Character Pack") ---
+// Loaded once at startup. Each zombie gets its own SkeletonUtils clone + AnimationMixer; all the
+// movement, hit and damage logic still runs on the zombie's Group exactly as before. If the model
+// or its loaders fail to load, nothing here runs and the old blocky zombies stay in place.
+const ZOMBIE_MODEL_URL = 'assets/models/zombie.glb';
+const ZOMBIE_MODEL_HEIGHT = 2.0;   // standing height in the zombie's local units (Z_SCALE still applies on top)
+const zombieModel = { root: null, clips: null, clone: null, scale: 1, lift: 0 };
+async function loadZombieModel() {
+  try {
+    const [{ GLTFLoader }, { clone }] = await Promise.all([
+      import('three/addons/loaders/GLTFLoader.js'),
+      import('three/addons/utils/SkeletonUtils.js'),
+    ]);
+    const gltf = await new GLTFLoader().loadAsync(ZOMBIE_MODEL_URL);
+    const root = gltf.scene;
+    root.updateMatrixWorld(true);
+    const box = new THREE.Box3().setFromObject(root);
+    const h = box.max.y - box.min.y;
+    if (!(h > 0) || !gltf.animations.length) throw new Error('zombie model has no usable size/animations');
+    zombieModel.scale = ZOMBIE_MODEL_HEIGHT / h;
+    zombieModel.lift = -box.min.y * zombieModel.scale;
+    zombieModel.root = root; zombieModel.clips = gltf.animations; zombieModel.clone = clone;
+    for (const z of zombies) attachRig(z); // zombies spawned before the model arrived (title crowd)
+  } catch (e) {
+    console.warn('[zombie model] using the built-in zombies instead:', e);
+  }
+}
+
+function attachRig(z) {
+  const m = zombieModel, u = z.userData;
+  if (!m.root || u.rig) return;
+  try {
+    const inst = m.clone(m.root);
+    inst.scale.multiplyScalar(m.scale);
+    inst.position.y = m.lift;
+    const tint = 0.85 + Math.random() * 0.3, mats = [];
+    inst.traverse(o => {
+      if (!o.isMesh) return;
+      o.frustumCulled = false;
+      o.castShadow = true;
+      const cl = mat => { const c = mat.clone(); c.color.multiplyScalar(tint); mats.push(c); return c; };
+      o.material = Array.isArray(o.material) ? o.material.map(cl) : cl(o.material);
+    });
+    const mixer = new THREE.AnimationMixer(inst), actions = {};
+    for (const name of ['Idle', 'Walk', 'Punch', 'Defeat']) {
+      const clip = m.clips.find(c => c.name === name);
+      if (!clip) throw new Error('missing clip ' + name);
+      const a = actions[name] = mixer.clipAction(clip);
+      if (name === 'Punch' || name === 'Defeat') { a.setLoop(THREE.LoopOnce, 1); a.clampWhenFinished = true; }
+    }
+    const holder = new THREE.Group();
+    holder.add(inst);
+    z.add(holder);
+    u.rig = { holder, inst, mixer, actions, mats, cur: null };
+    rigPlay(u.rig, 'Idle', 0);
+    // swap out the blocky body for good
+    for (const b of u.body) b.visible = false;
+    u.eyes.visible = false;
+  } catch (e) {
+    console.warn('[zombie model] could not attach, keeping the built-in zombie:', e);
+    if (u.rig) { z.remove(u.rig.holder); u.rig = null; }
+  }
+}
+
+// crossfade to a clip (a clip already playing just has its speed updated)
+function rigPlay(r, name, fade = 0.2, speed = 1, randomStart = false) {
+  const a = r.actions[name];
+  if (r.cur === a) { a.timeScale = speed; return; }
+  if (r.cur) r.cur.fadeOut(fade);
+  a.reset();
+  a.timeScale = speed;
+  if (randomStart) a.time = Math.random() * a.getClip().duration;
+  a.fadeIn(fade).play();
+  r.cur = a;
+}
+
+// per-frame: pick the clip from the zombie's state (the same flags the old rig read), advance the mixer
+function rigStep(z, dt) {
+  const u = z.userData, r = u.rig;
+  if (!u.dying) {
+    if (u.swing >= 0) rigPlay(r, 'Punch', 0.08, 1.4);                 // swinging at you or a door/window
+    else if (u.gait > 0.3 && u.climb < 0) rigPlay(r, 'Walk', 0.2, THREE.MathUtils.clamp(u.speed * u.gait / 1.7, 0.7, 2.8), true);
+    else rigPlay(r, 'Idle', 0.25);
+    r.holder.rotation.x = -0.35 * u.flinch;                            // rock back when shot
+  }
+  r.mixer.update(dt);
+}
+
+// hurt flash on/off (old blocky body and the model)
+function flashZombie(z, on) {
+  const u = z.userData;
+  for (const m of u.body) m.material = on ? zombieHurt : zombieSkin;
+  if (u.rig) for (const m of u.rig.mats) { m.emissive.setHex(on ? 0xd8e8b0 : 0x000000); m.emissiveIntensity = on ? 0.45 : 0; }
+}
+
+// freeze a settled model corpse into one static vertex-colored mesh (skinning applied once on the CPU)
+const _rbV = new THREE.Vector3();
+function bakeRigCorpse(z) {
+  const u = z.userData, r = u.rig;
+  z.updateMatrixWorld(true);
+  const P = [], C = [];
+  r.inst.traverse(m => {
+    if (!m.isSkinnedMesh) return;
+    const g = m.geometry, pos = g.attributes.position, idx = g.index;
+    const mats = Array.isArray(m.material) ? m.material : [m.material];
+    const groups = g.groups.length ? g.groups : [{ start: 0, count: idx ? idx.count : pos.count, materialIndex: 0 }];
+    for (const gr of groups) {
+      const col = mats[gr.materialIndex].color;
+      for (let i = gr.start; i < gr.start + gr.count; i++) {
+        const vi = idx ? idx.getX(i) : i;
+        _rbV.fromBufferAttribute(pos, vi);
+        m.applyBoneTransform(vi, _rbV);
+        _rbV.applyMatrix4(m.matrixWorld);
+        P.push(_rbV.x, _rbV.y, _rbV.z); C.push(col.r, col.g, col.b);
+      }
+    }
+  });
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3));
+  g.setAttribute('color', new THREE.Float32BufferAttribute(C, 3));
+  g.computeVertexNormals();
+  u.baked = new THREE.Mesh(g, zombieSkin);
+  u.baked.castShadow = u.baked.receiveShadow = true;
+  r.mixer.stopAllAction();
+  for (const m of r.mats) m.dispose();
+  scene.remove(z);
+  scene.add(u.baked);
+}
+loadZombieModel();
+
 // Spawn points sit just past the edge of the gameplay view (worked out from where the
 // follow camera will be, whatever the window's shape), so nothing pops in on screen.
 const spawnCam = new THREE.PerspectiveCamera(55, 1, 0.1, 200);
@@ -2915,6 +3045,7 @@ function spawnZombie(pos = spawnPoint(new THREE.Vector3())) {
     turn: 3.0 + Math.random() * 2.0,                   // max turn rate (rad/s), varied per zombie
   };
   z.rotation.y = z.userData.heading;
+  attachRig(z);
   scene.add(z);
   zombies.push(z);
   return z;
@@ -2925,7 +3056,7 @@ function hitZombie(z) {
   const u = z.userData;
   u.hurt = 0.12;
   u.flinch = 1;
-  for (const m of u.body) m.material = zombieHurt;
+  flashZombie(z, true);
 }
 
 const Z_POLE_KNEE = new THREE.Vector3(0, 0, 1);
@@ -2949,6 +3080,7 @@ function animateZombie(z, dt, near, dead = 0, sag = dead) {
   u.flinch *= Math.exp(-7 * dt);
   u.groan *= Math.exp(-2.5 * dt);
   u.attack = damp(u.attack, near < 2.4 && u.swing < 0 ? live : 0, 6, dt);
+  if (u.rig) { rigStep(z, dt); return; } // the model plays its own clips
   // the swing: rear back with the arms up (-1), slam down and lunge (+1), recover
   const sw = u.swing, rec = Z_SWING - Z_STRIKE - 0.1;
   const blow = sw < 0 || dead ? 0
@@ -3068,6 +3200,7 @@ function sinkCorpse(z) {
 // is a hundred draw calls instead of fifteen hundred
 function bakeCorpse(z) {
   const u = z.userData;
+  if (u.rig) { bakeRigCorpse(z); return; }
   z.updateMatrixWorld(true);
   let n = 0;
   for (const m of u.body) n += m.geometry.attributes.position.count;
@@ -3115,11 +3248,12 @@ function zombieDies(z, dir) {
   const u = z.userData;
   u.deadT = 0;
   u.hurt = 0;
-  for (const m of u.body) m.material = zombieSkin;
+  flashZombie(z, false);
   u.eyes.visible = false; // the light goes out
   // fall along the shot (or away from the survivor) — forward if hit from behind
   const fx = dir ? dir.x : z.position.x - player.position.x, fz = dir ? dir.z : z.position.z - player.position.z;
   u.fallDir = fx * Math.sin(u.heading) + fz * Math.cos(u.heading) >= 0 ? 1 : -1;
+  if (u.rig) { u.dying = true; u.rig.holder.rotation.x = 0; rigPlay(u.rig, 'Defeat', 0.1); } // goes limp while the group topples as before
   // land on top of any bodies already lying where this one falls
   const dx = Math.sin(u.heading) * u.fallDir, dz = Math.cos(u.heading) * u.fallDir;
   u.points = bodyPoints(z.position.x, z.position.z, dx, dz, z.scale.x);
@@ -4205,7 +4339,7 @@ function update(dt) {
     // hurt flash recover
     if (ud.hurt > 0) {
       ud.hurt -= dt;
-      if (ud.hurt <= 0) for (const m of ud.body) m.material = zombieSkin;
+      if (ud.hurt <= 0) flashZombie(z, false);
     }
     if (state.running) chaseZombie(z, dt);
     else if (title.active) wanderZombie(z, dt);
