@@ -58,6 +58,14 @@
   #reloadBar.active { opacity: 1; }
   #reloadFill { height: 100%; width: 0%; background: #e8d28a; }
   #reloadHint { font-size: 11px; color: #6a7078; margin-top: 6px; letter-spacing: 2px; }
+  /* weapon slots + current weapon */
+  #weaponBar { font-size: 13px; letter-spacing: 2px; color: #8a9098; margin-bottom: 6px; white-space: nowrap; }
+  #weaponBar .ws { margin: 0 9px; opacity: .7; }
+  #weaponBar .ws.on { color: #e8d28a; opacity: 1; text-shadow: 0 0 8px #e8d28a88; }
+  #weaponBar .ws.lock { opacity: .22; }
+  #weaponBar small { font-size: 10px; letter-spacing: 1px; margin-left: 3px; }
+  #weaponNow { font-size: 17px; letter-spacing: 3px; color: #e9e2d6; margin-bottom: 6px; text-shadow: 0 0 6px #000; }
+  #grenades { margin-top: 6px; font-size: 14px; letter-spacing: 2px; color: #9ad06a; }
 
   /* damage flash */
   #flash { position: fixed; inset: 0; background: #ff1e1e; opacity: 0; pointer-events: none; }
@@ -294,6 +302,7 @@
       <div class="stat"><span class="label">웨이브</span> <span id="waveNum">1</span></div>
       <div id="health"></div>
       <div id="powerups"></div>
+      <div id="grenades"></div>
     </div>
     <div class="stat" style="text-align:right">
       <span class="label">처치</span> <span id="kills">0</span><br>
@@ -304,6 +313,8 @@
   <div id="bossBar"><div id="bossName">보스</div><div id="bossTrack"><div id="bossFill"></div></div></div>
 
   <div id="ammoWrap">
+    <div id="weaponBar"></div>
+    <div id="weaponNow"></div>
     <div id="mag"></div>
     <div id="reloadBar"><div id="reloadFill"></div></div>
     <div id="reloadHint">[R] 재장전</div>
@@ -343,6 +354,8 @@
       <div class="crow"><span class="caps"><kbd class="wide">마우스</kbd></span><b>조준</b></div>
       <div class="crow"><span class="caps"><kbd class="wide">클릭</kbd></span><b>사격</b><em>누르고 있으면 연사</em></div>
       <div class="crow"><span class="caps"><kbd>R</kbd></span><b>재장전</b></div>
+      <div class="crow"><span class="caps"><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd><kbd>4</kbd></span><b>무기 교체</b><em>마우스 휠로도 전환</em></div>
+      <div class="crow"><span class="caps"><kbd>G</kbd></span><b>수류탄</b><em>주변 적에게 범위 피해</em></div>
       <div class="crow"><span class="caps"><kbd class="wide">ESC</kbd></span><b>일시정지</b></div>
       <div class="crow"><span class="caps"><kbd>M</kbd></span><b>음소거</b></div>
     </div>
@@ -767,14 +780,44 @@ const audio = {
   },
 
   // --- SFX ---
-  shot(hot, spread) {
+  shot(hot, spread, wid = 0) {
     if (!this.ok()) return;
-    const t = this.t(), p = rnd(0.94, 1.06), o = this.out(0.8, 0, 0.12);
+    const t = this.t(), p = rnd(0.94, 1.06), o = this.out(0.8, 0, wid === 3 ? 0.4 : 0.12);
+    if (wid === 1) { // shotgun: a fat, low boom with a long crunchy tail
+      this.nz(o, t, { buf: 'white', type: 'highpass', f: 1800, dur: 0.05, v: 0.6 });
+      this.osc(o, t, { w: 'sine', f: 110 * p, f2: 32, dur: 0.24, v: 0.9 });
+      this.osc(o, t, { w: 'pulse50', f: 190 * p, f2: 40, dur: 0.12, v: 0.3 });
+      this.nz(o, t, { rate: 0.2 * p, f: 2200, f2: 120, dur: 0.5, v: 0.8 });
+    } else if (wid === 2) { // rifle: short, snappy, higher; fired many times a second
+      this.nz(o, t, { buf: 'white', type: 'highpass', f: 4500, dur: 0.02, v: 0.4 });
+      this.osc(o, t, { w: 'pulse12', f: 430 * p, f2: 90 * p, dur: 0.05, v: 0.25 });
+      this.nz(o, t, { rate: 0.5 * p, f: 3800, f2: 500, dur: 0.09, v: 0.4 });
+    } else if (wid === 3) { // sniper: sharp crack, deep thump, ringing echo
+      this.nz(o, t, { buf: 'white', type: 'highpass', f: 2800, dur: 0.07, v: 0.7 });
+      this.osc(o, t, { w: 'sine', f: 90 * p, f2: 26, dur: 0.32, v: 0.9 });
+      this.osc(o, t, { w: 'tri', f: 2600, f2: 300, dur: 0.14, v: 0.2 });
+      this.nz(o, t + 0.02, { rate: 0.12, f: 1600, f2: 90, dur: 0.9, v: 0.55 });
+    } else {
     this.nz(o, t, { buf: 'white', type: 'highpass', f: 3500, dur: 0.025, v: 0.45 });            // crack
     this.osc(o, t, { w: 'pulse25', f: 270 * p, f2: 55 * p, dur: 0.09, v: 0.3 });                  // chip body
     this.osc(o, t, { w: 'sine', f: 140 * p, f2: 45, dur: 0.1, v: 0.55 });                          // punch
     this.nz(o, t, { rate: 0.32 * p, f: 3400, f2: 260, dur: spread ? 0.3 : 0.2, v: 0.5 + spread * 0.06 }); // crunchy tail
+    }
     if (hot) this.osc(o, t, { w: 'pulse12', f: 1100 * p, f2: 240, dur: 0.08, v: 0.13 });         // DOUBLE DAMAGE sizzle
+  },
+  swap() { // weapon switch: a short mechanical click
+    if (!this.ok()) return;
+    const t = this.t(), o = this.out(0.5, 0.1, 0.05);
+    this.nz(o, t, { buf: 'metal', rate: 0.7, type: 'highpass', f: 2400, dur: 0.03, v: 0.6 });
+    this.osc(o, t + 0.05, { w: 'tri', f: 420, f2: 210, dur: 0.05, v: 0.3 });
+  },
+  boom() { // grenade
+    if (!this.ok()) return;
+    const t = this.t(), o = this.out(1, 0, 0.45);
+    this.nz(o, t, { buf: 'white', type: 'highpass', f: 1500, dur: 0.1, v: 0.7 });
+    this.osc(o, t, { w: 'sine', f: 95, f2: 22, dur: 0.7, v: 1 });
+    this.nz(o, t, { rate: 0.12, f: 2600, f2: 70, dur: 0.9, v: 1 });
+    this.duckMusic(0.3, 0.9);
   },
   hit(pos) {
     if (!this.ok() || this.t() - this.lastHit < 0.03) return; // pierce/buckshot can hit many in one frame
@@ -866,7 +909,7 @@ const audio = {
   pickup(id) {
     if (!this.ok()) return;
     const t = this.t(), o = this.out(0.6, 0, 0.3);
-    const arps = { med: [62, 66, 69, 74, 78], dmg: [50, 57, 62, 69, 74], ammo: [69, 74, 78, 81, 86] };
+    const arps = { med: [62, 66, 69, 74, 78], dmg: [50, 57, 62, 69, 74], ammo: [69, 74, 78, 81, 86], ammobox: [67, 71, 74, 79, 83], kit: [64, 68, 71, 76, 80], nade: [45, 52, 57, 64, 69], wpn: [62, 69, 74, 81, 86] };
     (arps[id] || arps.med).forEach((m, i) => {
       this.osc(o, t + i * 0.055, { w: id === 'dmg' ? 'pulse12' : 'pulse25', f: midiHz(m), dur: 0.18, v: 0.3 });
       this.osc(o, t + i * 0.055, { w: 'tri', f: midiHz(m - 12), dur: 0.12, v: 0.25 });
@@ -2280,6 +2323,20 @@ blk(M.cuff, 0.58, 0.1, 0.56, 0, 0.49, -0.01, head);             // beanie cuff
 blk(M.beanie, 0.55, 0.2, 0.53, 0, 0.6, -0.01, head);            // beanie
 blk(M.beanie, 0.18, 0.06, 0.18, 0, 0.72, -0.01, head, 0.02);    // knit top
 
+// --- weapons (slots 1-4). Upgrades scale every weapon: damage ×state.damage, mag ×magSize/8,
+// reload ×reloadTime/1.2, fire delay ×fireRate/0.13, pierce/spread added on top.
+const WEAPONS = [
+  { id: 'pistol',  name: '권총',   unlock: 0, mag: 8,  reload: 1.2, rate: 0.13, dmg: 1,   pellets: 1, cone: 0,    fan: 0.13, pierce: 0, speed: 38, life: 0.9,  fall: 0,   kb: 1,   kick: 1,   shake: 0.12, muzzleZ: 1.47, flash: 0xffa64d, flashK: 1,   tracer: 0xffb04a, tw: 1,    tl: 1 },
+  { id: 'shotgun', name: '샷건',   unlock: 3, mag: 4,  reload: 2.0, rate: 0.85, dmg: 0.8, pellets: 7, cone: 0.3,  fan: 0.13, pierce: 0, speed: 34, life: 0.34, fall: 0.6, kb: 0.4, kick: 2.2, shake: 0.4,  muzzleZ: 1.47, flash: 0xff7a2e, flashK: 1.6, tracer: 0xff6a3a, tw: 0.8,  tl: 0.45 },
+  { id: 'rifle',   name: '소총',   unlock: 6, mag: 30, reload: 1.9, rate: 0.07, dmg: 0.6, pellets: 1, cone: 0.035, fan: 0.1, pierce: 0, speed: 44, life: 0.85, fall: 0,   kb: 0.5, kick: 0.5, shake: 0.07, muzzleZ: 1.47, flash: 0xffe14a, flashK: 0.8, tracer: 0xd8ff5a, tw: 0.7,  tl: 0.9 },
+  { id: 'sniper',  name: '저격총', unlock: 9, mag: 4,  reload: 2.4, rate: 1.1,  dmg: 5,   pellets: 1, cone: 0,    fan: 0.05, pierce: 5, speed: 70, life: 0.8,  fall: 0,   kb: 1.2, kick: 2.6, shake: 0.4,  muzzleZ: 1.95, flash: 0x6ad0ff, flashK: 1.3, tracer: 0x7ad8ff, tw: 1.6,  tl: 2.2 },
+];
+const mat2 = (color, o) => new THREE.MeshStandardMaterial({ color, roughness: 0.6, ...o });
+const GM = {
+  red: mat2(0xb33a2c), olive: mat2(0x4f5634), steel: mat2(0x8a9098, { roughness: 0.35, metalness: 0.6 }),
+  cyan: mat2(0x103040, { emissive: 0x39b6ff, emissiveIntensity: 0.9 }),
+};
+
 // --- rifle: origin at the butt plate, barrel along +Z ---
 const gun = new THREE.Group(); gun.rotation.order = 'YXZ'; player.add(gun);
 blk(M.rubber, 0.13, 0.19, 0.04, 0, -0.02, 0.02, gun, 0.01);     // butt pad
@@ -2291,12 +2348,39 @@ const mag = blk(M.metal, 0.09, 0.24, 0.12, 0, -0.14, 0.52, gun); mag.rotation.x 
 blk(M.wood, 0.13, 0.13, 0.36, 0, 0.01, 0.8, gun);               // handguard
 blk(M.metal, 0.06, 0.06, 0.46, 0, 0.03, 1.18, gun, 0.015);      // barrel
 blk(M.metal, 0.085, 0.085, 0.08, 0, 0.03, 1.42, gun, 0.015);    // muzzle brake
-blk(M.metal, 0.03, 0.07, 0.03, 0, 0.09, 1.34, gun, 0.008);      // front sight
-blk(M.rubber, 0.075, 0.075, 0.4, 0, 0.17, 0.46, gun, 0.02);     // scope tube
-blk(M.rubber, 0.1, 0.1, 0.08, 0, 0.17, 0.28, gun, 0.02);        // eyepiece
-blk(M.rubber, 0.11, 0.11, 0.09, 0, 0.17, 0.66, gun, 0.02);      // objective bell
-blk(M.lens, 0.08, 0.08, 0.01, 0, 0.17, 0.706, gun, 0.004);      // lens glint
-for (const z of [0.38, 0.56]) blk(M.metal, 0.04, 0.07, 0.04, 0, 0.11, z, gun, 0.01); // scope rings
+const sightM = blk(M.metal, 0.03, 0.07, 0.03, 0, 0.09, 1.34, gun, 0.008); // front sight
+const scopeParts = [
+  blk(M.rubber, 0.075, 0.075, 0.4, 0, 0.17, 0.46, gun, 0.02),   // scope tube
+  blk(M.rubber, 0.1, 0.1, 0.08, 0, 0.17, 0.28, gun, 0.02),      // eyepiece
+  blk(M.rubber, 0.11, 0.11, 0.09, 0, 0.17, 0.66, gun, 0.02),    // objective bell
+  blk(M.lens, 0.08, 0.08, 0.01, 0, 0.17, 0.706, gun, 0.004),    // lens glint
+  ...[0.38, 0.56].map(z => blk(M.metal, 0.04, 0.07, 0.04, 0, 0.11, z, gun, 0.01)), // scope rings
+];
+// per-weapon parts, hidden until that weapon is drawn (the pistol is the plain model above)
+const gunExtras = { pistol: [], shotgun: [], rifle: [], sniper: [] };
+const gunLook = { mag: true };
+const xb = (id, ...a) => { const m = blk(...a); m.visible = false; gunExtras[id].push(m); return m; };
+// shotgun: fat barrel, tube magazine, red-banded pump forend
+xb('shotgun', M.metal, 0.1, 0.1, 0.62, 0, 0.03, 1.12, gun, 0.02);
+xb('shotgun', GM.steel, 0.06, 0.06, 0.6, 0, -0.045, 1.12, gun, 0.015);
+xb('shotgun', M.wood, 0.15, 0.12, 0.3, 0, -0.03, 0.86, gun);
+xb('shotgun', GM.red, 0.155, 0.125, 0.05, 0, -0.03, 1.03, gun, 0.01);
+xb('shotgun', M.metal, 0.12, 0.12, 0.06, 0, 0.03, 1.45, gun, 0.015);
+// rifle: olive furniture, red-dot sight, flash hider, foregrip (the magazine is stretched in applyWeaponLook)
+xb('rifle', GM.olive, 0.15, 0.15, 0.34, 0, 0.015, 0.8, gun, 0.02);
+xb('rifle', GM.olive, 0.15, 0.17, 0.26, 0, -0.02, 0.2, gun, 0.02);
+xb('rifle', M.rubber, 0.07, 0.07, 0.13, 0, 0.14, 0.5, gun, 0.015);
+xb('rifle', GM.red, 0.05, 0.05, 0.01, 0, 0.14, 0.57, gun, 0.004);
+xb('rifle', M.metal, 0.1, 0.1, 0.12, 0, 0.03, 1.44, gun, 0.015);
+xb('rifle', M.rubber, 0.05, 0.2, 0.06, 0, -0.1, 0.95, gun, 0.01);
+// sniper: long fluted barrel, heavy brake, cyan-trimmed bolt-gun scope, bipod
+xb('sniper', M.metal, 0.05, 0.05, 0.55, 0, 0.03, 1.68, gun, 0.012);
+xb('sniper', M.metal, 0.095, 0.095, 0.1, 0, 0.03, 1.92, gun, 0.015);
+xb('sniper', M.rubber, 0.105, 0.105, 0.5, 0, 0.19, 0.46, gun, 0.02);
+xb('sniper', GM.cyan, 0.112, 0.03, 0.2, 0, 0.19, 0.46, gun, 0.006);
+xb('sniper', GM.steel, 0.025, 0.24, 0.025, 0.07, -0.08, 1.3, gun, 0.006).rotation.z = -0.35;
+xb('sniper', GM.steel, 0.025, 0.24, 0.025, -0.07, -0.08, 1.3, gun, 0.006).rotation.z = 0.35;
+xb('sniper', GM.cyan, 0.03, 0.03, 0.36, 0, 0.06, 0.36, gun, 0.006);
 const GRIP_R = new THREE.Vector3(0, -0.1, 0.3);    // firing hand on the pistol grip
 const GRIP_L = new THREE.Vector3(0, -0.07, 0.74);  // support hand under the handguard
 const MAG_Y = mag.position.y;
@@ -2306,6 +2390,17 @@ const EJECT = new THREE.Vector3(-0.08, 0.06, 0.48); // ejection port (right side
 const spareMag = new THREE.Mesh(mag.geometry, M.metal); spareMag.castShadow = true; player.add(spareMag);
 // bullets spawn here
 const muzzle = new THREE.Object3D(); muzzle.position.set(0, 0.03, 1.47); gun.add(muzzle);
+// show the parts of weapon `i` (called on every switch and at the start of a run)
+function applyWeaponLook(i) {
+  const W = WEAPONS[i];
+  for (const k in gunExtras) gunExtras[k].forEach(m => { m.visible = k === W.id; });
+  const scoped = W.id === 'pistol' || W.id === 'sniper';
+  scopeParts.forEach(m => { m.visible = scoped; });
+  sightM.visible = W.id === 'pistol' || W.id === 'rifle';
+  gunLook.mag = W.id !== 'shotgun';
+  mag.scale.set(1, W.id === 'rifle' ? 1.5 : 1, 1);
+  muzzle.position.z = W.muzzleZ;
+}
 
 // --- arms: built along local Y, laid between the joints every frame ---
 const arms = [1, -1].map(side => {
@@ -2484,16 +2579,17 @@ function bone(mesh, a, b, face) {
 
 // called by fire(): kick the rifle back, light the flash, spit a casing and some smoke
 function muzzleFlash(hot) {
-  rig.kick = 1;
+  const W = WEAPONS[state.weapon];
+  rig.kick = W.kick;
   rig.flash = 1;
-  rig.flashPeak = 40 + Math.random() * 20;
-  const color = hot ? FLASH_HOT : FLASH_COLOR;
+  rig.flashPeak = (40 + Math.random() * 20) * Math.min(1.3, W.flashK);
+  const color = hot ? FLASH_HOT : W.flash;
   muzzleLight.color.setHex(color);
   flashFireMat.color.setHex(color);
   flashGlow.material.color.setHex(color);
   // a different star every shot
   flash.rotation.z = Math.random() * Math.PI;
-  flash.scale.setScalar(0.85 + Math.random() * 0.4);
+  flash.scale.setScalar((0.85 + Math.random() * 0.4) * W.flashK);
   flashCore.scale.setScalar(0.16 + Math.random() * 0.06);
   flashSpikes.forEach((s, i) => {
     const len = i > 1 ? 0.2 + Math.random() * 0.22 : (i ? 0.65 : 0.4) + Math.random() * 0.35;
@@ -2626,7 +2722,7 @@ function animatePlayer(dt, mx, mz) {
   // --- reload: tip the rifle in, strip the mag, pull a fresh one off the chest rig ---
   rig.reload = damp(rig.reload, state.reloading ? 1 : 0, state.reloading ? 14 : 9, dt);
   const rl = ease(rig.reload);
-  const u = state.reloading ? state.reloadT / state.reloadTime : 1;
+  const u = state.reloading ? state.reloadT / state.reloadLen : 1;
   head.rotation.set(0.1 + 0.32 * rl, -tw * 0.85 + 0.25 * rl, 0);
 
   // --- rifle: butt in the shoulder pocket, barrel down the aim line ---
@@ -2641,12 +2737,14 @@ function animatePlayer(dt, mx, mz) {
   if (state.reloading && u >= 0.12 && u < 0.22) magDrop = 0.24 * ease((u - 0.12) / 0.1);
   if (state.reloading && u >= 0.78) magDrop = 0.2 * (1 - ease(Math.min(1, (u - 0.78) / 0.17)));
   mag.position.y = MAG_Y - magDrop;
-  mag.visible = !state.reloading || u < 0.22 || u >= 0.78;
+  mag.visible = gunLook.mag && (!state.reloading || u < 0.22 || u >= 0.78);
   if (state.reloading && u >= 0.22 && !rig.magDropped) {
     rig.magDropped = true;
+    if (gunLook.mag) {
     const old = new THREE.Mesh(mag.geometry, M.metal);
     mag.getWorldPosition(old.position); mag.getWorldQuaternion(old.quaternion);
     spawnDebris(old, new THREE.Vector3(0, -1, 0), { life: 4, bounce: 0.05, spin: new THREE.Vector3(3, 0, 2) });
+    }
   }
 
   // hands: the firing hand never leaves the grip; the support hand works the reload
@@ -2663,7 +2761,7 @@ function animatePlayer(dt, mx, mz) {
     arm.hand.position.copy(arm.wrist);
     arm.hand.quaternion.copy(gun.quaternion);
   }
-  spareMag.visible = state.reloading && u >= 0.45 && u < 0.78;
+  spareMag.visible = gunLook.mag && state.reloading && u >= 0.45 && u < 0.78;
   if (spareMag.visible) {
     spareMag.quaternion.copy(gun.quaternion);
     spareMag.position.copy(arms[0].wrist).add(_w.set(0, 0.13, 0).applyQuaternion(gun.quaternion));
@@ -2701,6 +2799,12 @@ const state = {
   reloading: false,
   reloadT: 0,
   reloadTime: 1.2,
+  reloadLen: 1.2,  // length of the reload in progress (weapon-specific)
+  weapon: 0,       // current weapon slot
+  unlocked: [true, false, false, false],
+  ammo: [8, 4, 30, 4], // magazine contents of each weapon (the current one lives in `mag`)
+  grenades: 0,
+  nadeCd: 0,
   fireCd: 0,
   fireRate: 0.13,
   dmgCd: 0,
@@ -2735,10 +2839,11 @@ const particles = [];
 // tracers: a white-hot core inside a softer colored streak, both additive so they glow
 const glowMat = (color, opacity) => new THREE.MeshBasicMaterial({ color, transparent: true, opacity, blending: THREE.AdditiveBlending, depthWrite: false });
 const tracerCore = glowMat(0xfff4d6, 1), tracerGlow = glowMat(0xffb04a, 0.45), tracerGlowHot = glowMat(0xff5a1e, 0.6); // hot: DOUBLE DAMAGE
-function makeTracer(hot) {
+const tracerGlowW = WEAPONS.map((w, i) => i ? glowMat(w.tracer, 0.5) : tracerGlow); // each weapon's own streak colour
+function makeTracer(hot, W = WEAPONS[0]) {
   const b = new THREE.Group(); // +Z is the direction of travel; the streak trails behind the head
-  const core = new THREE.Mesh(BOX, tracerCore); core.scale.set(0.05, 0.05, 0.9); core.position.z = -0.35;
-  const glow = new THREE.Mesh(BOX, hot ? tracerGlowHot : tracerGlow); glow.scale.set(0.15, 0.15, 1.05); glow.position.z = -0.42;
+  const core = new THREE.Mesh(BOX, tracerCore); core.scale.set(0.05 * W.tw, 0.05 * W.tw, 0.9 * W.tl); core.position.z = -0.35 * W.tl;
+  const glow = new THREE.Mesh(BOX, hot ? tracerGlowHot : tracerGlowW[WEAPONS.indexOf(W)]); glow.scale.set(0.15 * W.tw, 0.15 * W.tw, 1.05 * W.tl); glow.position.z = -0.42 * W.tl;
   b.add(core, glow);
   return b;
 }
@@ -2761,7 +2866,9 @@ window.addEventListener('keydown', e => {
   if (e.code === 'Escape' || e.code === 'KeyP') { if (!e.repeat) setPaused(!state.paused); return; }
   if (state.paused) return;
   if (e.code === 'KeyR') startReload();
+  if (e.code === 'KeyG' && !e.repeat) throwGrenade();
   if (state.choosing && /^Digit[1-3]$/.test(e.code)) choose(+e.code.slice(5) - 1);
+  else if (state.running && /^Digit[1-4]$/.test(e.code)) switchWeapon(+e.code.slice(5) - 1);
   if (e.code === 'KeyM') {
     const m = audio.toggleMute();
     document.getElementById('reloadHint').textContent = m ? '[R] 재장전   ·   [M] 음소거 중' : '[R] 재장전';
@@ -2772,6 +2879,15 @@ window.addEventListener('mousemove', e => {
   mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
   mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
 });
+// mouse wheel cycles through the unlocked weapons
+window.addEventListener('wheel', e => {
+  if (!state.running || state.paused || state.choosing || !e.deltaY) return;
+  const dir = e.deltaY > 0 ? 1 : -1;
+  for (let k = 1; k < WEAPONS.length; k++) {
+    const i = (state.weapon + dir * k + WEAPONS.length * 4) % WEAPONS.length;
+    if (state.unlocked[i]) { switchWeapon(i); break; }
+  }
+}, { passive: true });
 window.addEventListener('mousedown', () => { firing = true; });
 window.addEventListener('mouseup', () => { firing = false; });
 window.addEventListener('contextmenu', e => e.preventDefault());
@@ -2809,6 +2925,9 @@ const hud = {
   pickerSub: document.getElementById('pickerSub'),
   cards: document.getElementById('cards'),
   mag: document.getElementById('mag'),
+  weaponBar: document.getElementById('weaponBar'),
+  weaponNow: document.getElementById('weaponNow'),
+  grenades: document.getElementById('grenades'),
   reloadBar: document.getElementById('reloadBar'),
   reloadFill: document.getElementById('reloadFill'),
   flash: document.getElementById('flash'),
@@ -2830,24 +2949,33 @@ function updateHUD() {
   if (state.pDamage > 0) pu += `<div style="color:#ff7a2e">더블 데미지 ${clock(state.pDamage)}</div>`;
   if (state.pAmmo > 0) pu += `<div style="color:#e8d28a">무한 탄창 ${clock(state.pAmmo)}</div>`;
   hud.powerups.innerHTML = pu;
+  const cap = magCap(), W = WEAPONS[state.weapon];
   let m = '';
-  for (let i = 0; i < state.magSize; i++) {
+  for (let i = 0; i < cap; i++) {
     m += `<span class="${i < state.mag ? 'live' : 'empty'}">▮</span>`;
   }
   hud.mag.innerHTML = m;
+  hud.mag.style.fontSize = cap > 16 ? '10px' : '';
+  hud.mag.style.letterSpacing = cap > 16 ? '1px' : '';
+  const bar = WEAPONS.map((w, i) => state.unlocked[i]
+    ? `<span class="ws${i === state.weapon ? ' on' : ''}">${i + 1} ${w.name}</span>`
+    : `<span class="ws lock">${i + 1} ${w.name}<small>웨이브 ${w.unlock}</small></span>`).join('');
+  if (bar !== hud.weaponBar._s) hud.weaponBar.innerHTML = hud.weaponBar._s = bar;
+  hud.weaponNow.textContent = `${W.name}  ${state.mag} / ${cap}`;
+  hud.grenades.textContent = state.grenades > 0 ? `수류탄 ×${state.grenades}  [G]` : '';
   hud.reloadBar.classList.toggle('active', state.reloading);
-  if (state.reloading) hud.reloadFill.style.width = (state.reloadT / state.reloadTime * 100) + '%';
+  if (state.reloading) hud.reloadFill.style.width = (state.reloadT / state.reloadLen * 100) + '%';
 }
 
 let flashT = 0;
 function damageFlash() { hud.flash.style.background = '#ff1e1e'; flashT = 0.4; state.shake = 0.5; }
 
-function showToast(text, color) {
+function showToast(text, color, ms = 1400) {
   hud.toast.textContent = text;
   hud.toast.style.color = color;
   hud.toast.style.opacity = 1;
   clearTimeout(showToast._t);
-  showToast._t = setTimeout(() => { hud.toast.style.opacity = 0; }, 1400);
+  showToast._t = setTimeout(() => { hud.toast.style.opacity = 0; }, ms);
 }
 
 function showBanner(text, sub, dur = 1.6) {
@@ -2861,50 +2989,146 @@ function showBanner(text, sub, dur = 1.6) {
 // ===================================================================
 // WEAPON
 // ===================================================================
+// magazine size of weapon i (default: the current one), scaled by the 확장 탄창 upgrade
+function magCap(i = state.weapon) {
+  return Math.max(1, Math.round(WEAPONS[i].mag * state.magSize / BASE_STATS.magSize));
+}
+const reloadLenOf = W => W.reload * state.reloadTime / BASE_STATS.reloadTime;
+const fireDelayOf = W => W.rate * state.fireRate / BASE_STATS.fireRate;
+
 function startReload() {
-  if (!state.running || state.reloading || state.mag === state.magSize) return;
+  if (!state.running || state.reloading || state.mag >= magCap()) return;
   state.reloading = true;
   state.reloadT = 0;
+  state.reloadLen = reloadLenOf(WEAPONS[state.weapon]);
   audio.reloadOut();
 }
 function finishReload() {
   state.reloading = false;
-  state.mag = state.magSize;
+  state.mag = magCap();
   audio.reloadIn();
 }
 
+// draw weapon i (keys 1-4 / mouse wheel). A reload in progress is cancelled; each weapon keeps its own ammo.
+function switchWeapon(i, quiet) {
+  if (!state.running || i === state.weapon || i < 0 || i >= WEAPONS.length) return;
+  if (!state.unlocked[i]) { showToast(`${WEAPONS[i].name} 잠김 · 웨이브 ${WEAPONS[i].unlock}에서 해금`, '#8a9098'); return; }
+  state.ammo[state.weapon] = state.mag;
+  state.reloading = false;
+  state.weapon = i;
+  state.mag = Math.min(state.ammo[i], magCap(i));
+  state.fireCd = Math.max(state.fireCd, 0.25);
+  applyWeaponLook(i);
+  if (!quiet) { audio.swap(); showToast(WEAPONS[i].name, '#e8d28a', 700); }
+}
+
+function unlockWeapon(i, why) {
+  if (state.unlocked[i]) return false;
+  state.unlocked[i] = true;
+  state.ammo[i] = magCap(i);
+  return true;
+}
+
+// refill every weapon (탄약 상자)
+function refillAll() {
+  state.reloading = false;
+  WEAPONS.forEach((w, i) => { state.ammo[i] = magCap(i); });
+  state.mag = magCap();
+}
+
 function fire() {
-  if (state.fireCd > 0 || state.reloading || state.mag <= 0 || !state.running) return;
+  if (state.fireCd > 0 || state.reloading || !state.running) return;
+  if (state.mag <= 0) { startReload(); return; }
+  const W = WEAPONS[state.weapon];
   if (state.pAmmo <= 0) {
     state.mag--;
     if (state.mag <= 0) startReload();
   }
   state.shots++;
-  state.fireCd = state.fireRate;
+  state.fireCd = fireDelayOf(W);
 
   const aim = new THREE.Vector3(aimPoint.x - player.position.x, 0, aimPoint.z - player.position.z);
   if (aim.lengthSq() < 1e-4) return;
   aim.normalize();
 
-  // spawn at muzzle world position; BUCKSHOT fans extra bullets around the aim line
+  // spawn at muzzle world position; extra pellets (산탄 upgrade, shotgun) fan out around the aim line
   const mp = new THREE.Vector3();
   muzzle.getWorldPosition(mp);
-  const count = 1 + state.spread;
+  const count = W.pellets + state.spread;
   for (let k = 0; k < count; k++) {
-    const a = (k - (count - 1) / 2) * 0.13;
+    let a;
+    if (W.cone > 0) a = count > 1 ? ((k / (count - 1)) - 0.5) * 2 * W.cone + (Math.random() - 0.5) * 0.08 : (Math.random() - 0.5) * 2 * W.cone;
+    else a = (k - (count - 1) / 2) * W.fan;
     const c = Math.cos(a), s = Math.sin(a);
     const dir = new THREE.Vector3(aim.x * c - aim.z * s, 0, aim.x * s + aim.z * c);
-    const b = makeTracer(state.pDamage > 0);
+    const b = makeTracer(state.pDamage > 0, W);
     b.position.copy(mp);
     b.lookAt(mp.clone().add(dir));
-    b.userData = { dir, life: 0.9, pierce: state.pierce, hits: new Set() };
+    const life = W.life * (W.pellets > 1 ? 0.85 + Math.random() * 0.3 : 1);
+    b.userData = { dir, life, maxLife: life, speed: W.speed * (W.pellets > 1 ? 0.9 + Math.random() * 0.2 : 1),
+      pierce: W.pierce + state.pierce, hits: new Set(), dmg: W.dmg, fall: W.fall, kb: W.kb };
     scene.add(b);
     bullets.push(b);
   }
 
   muzzleFlash(state.pDamage > 0);
-  state.shake = Math.max(state.shake, 0.12);
-  audio.shot(state.pDamage > 0, state.spread);
+  state.shake = Math.max(state.shake, W.shake);
+  audio.shot(state.pDamage > 0, state.spread, state.weapon);
+}
+
+// --- grenade: [G] bursts around the survivor, hurting and shoving back everything near ---
+const NADE_R = 6.5, NADE_DMG = 6, NADE_MAX = 5;
+const blasts = [];
+const blastGeo = new THREE.SphereGeometry(1, 14, 9);
+const ringGeo = new THREE.RingGeometry(0.82, 1, 28).rotateX(-Math.PI / 2);
+const emberMat = new THREE.MeshBasicMaterial({ color: 0xffa040 });
+function throwGrenade() {
+  if (!state.running || state.paused || state.choosing || state.grenades <= 0 || state.nadeCd > 0) return;
+  state.grenades--;
+  state.nadeCd = 0.6;
+  const o = player.position;
+  for (let j = zombies.length - 1; j >= 0; j--) {
+    const z = zombies[j];
+    const dx = z.position.x - o.x, dz = z.position.z - o.z, d = Math.hypot(dx, dz);
+    if (d > NADE_R) continue;
+    const fall = 1 - 0.45 * d / NADE_R;
+    const dir = new THREE.Vector3(dx, 0, dz).normalize();
+    if (d < 1e-3) dir.set(0, 0, 1);
+    z.userData.hp -= NADE_DMG * fall * state.damage;
+    hitZombie(z);
+    z.position.addScaledVector(dir, z.userData.kb * 6 * fall);
+    pushOutOfSolids(z.position, z.userData.radius);
+    if (z.userData.hp <= 0) { audio.zdeath(z.position); killZombie(z, j, dir); }
+  }
+  // visuals: a hot fireball, a shock ring on the floor and some flying embers
+  const ball = new THREE.Mesh(blastGeo, glowMat(0xffa040, 0.8)), ring = new THREE.Mesh(ringGeo, glowMat(0xffd080, 0.9));
+  ball.position.set(o.x, 1, o.z); ring.position.set(o.x, 0.12, o.z);
+  scene.add(ball, ring);
+  blasts.push({ ball, ring, t: 0 });
+  for (let i = 0; i < 18; i++) {
+    const p = new THREE.Mesh(BOX, emberMat), sz = 0.1 + Math.random() * 0.14;
+    p.scale.set(sz, sz, sz); p.position.set(o.x, 0.8, o.z);
+    const a = Math.random() * 6.283, sp = 4 + Math.random() * 6;
+    p.userData = { v: new THREE.Vector3(Math.cos(a) * sp, 3 + Math.random() * 5, Math.sin(a) * sp), life: 0.5 + Math.random() * 0.5 };
+    scene.add(p); particles.push(p);
+  }
+  state.shake = 1;
+  audio.boom();
+  showToast('수류탄 폭발', '#ffa040', 700);
+}
+function updateBlasts(dt) {
+  for (let i = blasts.length - 1; i >= 0; i--) {
+    const b = blasts[i];
+    b.t += dt;
+    const k = Math.min(1, b.t / 0.4);
+    b.ball.scale.setScalar(0.5 + k * 3.2); b.ball.material.opacity = 0.8 * (1 - k);
+    b.ring.scale.setScalar(0.5 + k * NADE_R); b.ring.material.opacity = 0.9 * (1 - k);
+    if (k >= 1) {
+      scene.remove(b.ball, b.ring);
+      b.ball.material.dispose(); b.ring.material.dispose();
+      blasts.splice(i, 1);
+    }
+  }
 }
 
 // ===================================================================
@@ -3744,6 +3968,8 @@ function killZombie(z, idx, dir) {
     for (let i = 0; i < 2; i++) spawnBlood(z.position);
     spawnDrop(DROP_TYPES.find(t => t.id === (Math.random() < 0.5 ? 'dmg' : 'ammo')), z.position);
     if (state.hp < state.maxHp) spawnDrop(DROP_TYPES[0], { x: z.position.x + 1.4, z: z.position.z + 0.8 });
+    spawnDrop(DROP_TYPES.find(t => t.id === 'ammobox'), { x: z.position.x - 1.4, z: z.position.z + 0.8 });
+    spawnDrop(DROP_TYPES.find(t => t.id === 'nade'), { x: z.position.x + 0.2, z: z.position.z - 1.5 });
     state.sinceDrop = 0;
     bossRef = null;
     showBanner('보스 처치', '+' + u.score, 2);
@@ -3761,6 +3987,13 @@ const DROP_TYPES = [
   { id: 'med',  name: '체력 +1',      color: 0xd6453c, weight: 40 },
   { id: 'dmg',  name: '더블 데미지',  color: 0xff7a2e, weight: 25 },
   { id: 'ammo', name: '무한 탄창', color: 0xe8d28a, weight: 25 },
+  { id: 'ammobox', name: '탄약 상자 · 전 무기 탄약 충전', color: 0x7fd37f, weight: 18 },
+  { id: 'kit',  name: '응급 키트 · 체력 +1', color: 0x4fc08a, weight: 14 },
+  { id: 'nade', name: '수류탄 · [G] 폭발', color: 0xffa040, weight: 14 },
+  // weapon crates: only drop for a weapon that's still locked
+  { id: 'wpn1', name: '샷건 획득', color: 0xff7a2e, weight: 4, wpn: 1 },
+  { id: 'wpn2', name: '소총 획득', color: 0xe8e04a, weight: 4, wpn: 2 },
+  { id: 'wpn3', name: '저격총 획득', color: 0x6ad0ff, weight: 4, wpn: 3 },
 ];
 // each pickup is a little blocky item in a soft glow of its color
 const K = 0x1a1a1a;
@@ -3779,6 +4012,34 @@ const DROP_MODELS = {
     [0.52, 0.3, 0.28, 0, 0, 0, 0x4f5634, 0, 0, 0, 0.04], [0.54, 0.06, 0.3, 0, 0.17, 0, 0x3d4228, 0, 0, 0, 0.02],
     [0.24, 0.04, 0.06, 0, 0.215, 0, 0x2a2c24, 0, 0, 0, 0.01], [0.3, 0.06, 0.006, 0, 0, 0.143, 0xd8b84a, 0, 0, 0, 0.002],
   ],
+  ammobox: [ // wooden crate with brass rounds standing in it
+    [0.56, 0.26, 0.38, 0, -0.04, 0, 0x7a5a2c, 0, 0, 0, 0.04], [0.58, 0.04, 0.4, 0, 0.1, 0, 0x4a3518, 0, 0, 0, 0.01],
+    [0.07, 0.2, 0.07, -0.18, 0.2, -0.05, 0xc9a14a, 0, 0, 0, 0.02], [0.07, 0.2, 0.07, -0.06, 0.2, 0.06, 0xc9a14a, 0, 0, 0, 0.02],
+    [0.07, 0.2, 0.07, 0.06, 0.2, -0.06, 0xc9a14a, 0, 0, 0, 0.02], [0.07, 0.2, 0.07, 0.18, 0.2, 0.05, 0xc9a14a, 0, 0, 0, 0.02],
+    [0.34, 0.09, 0.01, 0, -0.04, 0.197, 0x7fd37f, 0, 0, 0, 0.002],
+  ],
+  kit: [  // green field kit with a white cross and a carry strap
+    [0.5, 0.32, 0.3, 0, 0, 0, 0x3f7a4a, 0, 0, 0, 0.05], [0.34, 0.05, 0.06, 0, 0.19, 0, 0x26492d, 0, 0, 0, 0.01],
+    [0.26, 0.07, 0.02, 0, 0, 0.158, 0xeeeeee, 0, 0, 0, 0.004], [0.07, 0.26, 0.02, 0, 0, 0.159, 0xeeeeee, 0, 0, 0, 0.004],
+    [0.04, 0.34, 0.32, -0.15, 0, 0, 0x26492d, 0, 0, 0, 0.01], [0.04, 0.34, 0.32, 0.15, 0, 0, 0x26492d, 0, 0, 0, 0.01],
+  ],
+  nade: [ // pineapple grenade
+    [0.3, 0.36, 0.3, 0, -0.02, 0, 0x4b5d2e, 0, 0, 0, 0.07], [0.32, 0.04, 0.32, 0, 0.0, 0, 0x2f3b1d, 0, 0, 0, 0.01],
+    [0.32, 0.04, 0.32, 0, -0.12, 0, 0x2f3b1d, 0, 0, 0, 0.01], [0.12, 0.1, 0.12, 0, 0.2, 0, 0x9a9a9a, 0, 0, 0, 0.02],
+    [0.22, 0.03, 0.05, 0.09, 0.27, 0, 0xc0c0c0, 0, 0, 0.2, 0.005], [0.07, 0.07, 0.01, 0.2, 0.2, 0, 0xd8b84a, 0, 0, 0, 0.002],
+  ],
+  wpn1: [ // shotgun lying on its side
+    [0.74, 0.1, 0.12, 0, 0, 0, 0x2b2e34, 0, 0, 0, 0.015], [0.26, 0.12, 0.14, -0.34, -0.02, 0, 0x7b4a29, 0, 0, 0, 0.02],
+    [0.22, 0.12, 0.15, 0.1, -0.05, 0, 0x7b4a29, 0, 0, 0, 0.02], [0.05, 0.13, 0.155, 0.19, -0.05, 0, 0xb33a2c, 0, 0, 0, 0.01],
+  ],
+  wpn2: [ // rifle with a long magazine
+    [0.78, 0.1, 0.12, 0, 0, 0, 0x4f5634, 0, 0, 0, 0.015], [0.12, 0.3, 0.1, 0.02, -0.18, 0, 0x2b2e34, 0, 0, 0.12, 0.015],
+    [0.22, 0.14, 0.13, -0.38, -0.02, 0, 0x2b2e34, 0, 0, 0, 0.02], [0.14, 0.05, 0.08, 0.1, 0.075, 0, 0x151518, 0, 0, 0, 0.01],
+  ],
+  wpn3: [ // sniper rifle with a scope
+    [0.92, 0.07, 0.1, 0, 0, 0, 0x2b2e34, 0, 0, 0, 0.012], [0.3, 0.12, 0.13, -0.4, -0.02, 0, 0x5a5f68, 0, 0, 0, 0.02],
+    [0.34, 0.09, 0.09, -0.05, 0.12, 0, 0x151518, 0, 0, 0, 0.02], [0.03, 0.03, 0.3, 0.15, 0.04, 0, 0x39b6ff, 0, 0, 0, 0.005],
+  ],
 };
 const dropMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.5, emissive: 0x1c1c1c });
 const dropGlow = glowTexture();
@@ -3796,7 +4057,8 @@ function maybeDrop(pos) {
   if (Math.random() > DROP_CHANCE + state.dropBonus && state.sinceDrop < DROP_PITY) return;
   state.sinceDrop = 0;
   // no medkits at full health — they'd be a wasted drop
-  const pool = DROP_TYPES.filter(t => t.id !== 'med' || state.hp < state.maxHp);
+  // no medkits at full health, no weapon crate for a weapon you already own
+  const pool = DROP_TYPES.filter(t => (t.id !== 'med' && t.id !== 'kit' || state.hp < state.maxHp) && (t.wpn == null || !state.unlocked[t.wpn]));
   let r = Math.random() * pool.reduce((a, t) => a + t.weight, 0);
   spawnDrop(pool.find(t => (r -= t.weight) < 0) || pool[0], pos);
 }
@@ -3812,11 +4074,15 @@ function spawnDrop(type, pos) {
 }
 
 function collect(type) {
-  audio.pickup(type.id);
-  showToast(type.name, '#' + type.color.toString(16).padStart(6, '0'));
+  audio.pickup(type.wpn != null ? 'wpn' : type.id);
+  showToast(type.name, '#' + type.color.toString(16).padStart(6, '0'), type.wpn != null ? 2200 : 1400);
+  if (type.id === 'ammobox') refillAll();
+  else if (type.id === 'kit') state.hp = Math.min(state.maxHp, state.hp + 1);
+  else if (type.id === 'nade') state.grenades = Math.min(NADE_MAX, state.grenades + 1);
+  else if (type.wpn != null) { unlockWeapon(type.wpn); switchWeapon(type.wpn, true); state.ammo[type.wpn] = magCap(type.wpn); if (state.weapon === type.wpn) state.mag = magCap(); }
   if (type.id === 'med') state.hp = Math.min(state.maxHp, state.hp + 1);
   else if (type.id === 'dmg') state.pDamage = 10;
-  else if (type.id === 'ammo') { state.pAmmo = 8; state.reloading = false; state.mag = state.magSize; }
+  else if (type.id === 'ammo') { state.pAmmo = 8; state.reloading = false; state.mag = magCap(); }
 }
 
 function updateDrops(dt) {
@@ -3850,7 +4116,7 @@ function updateDrops(dt) {
 // Each card can be taken up to `max` times per run. `ok` (optional) hides a
 // card while it would do nothing. `stat` returns [now, after] for the card.
 const UPGRADES = [
-  { id: 'mag',    cat: 'handling',  name: '확장 탄창',  desc: '탄창당 +4발',     max: 5, stat: s => [s.magSize, s.magSize + 4 + '발'],                            apply: s => { s.magSize += 4; s.mag = s.magSize; } },
+  { id: 'mag',    cat: 'handling',  name: '확장 탄창',  desc: '탄창당 +4발',     max: 5, stat: s => [s.magSize, s.magSize + 4 + '발'],                            apply: s => { s.magSize += 4; s.mag = magCap(); } },
   { id: 'reload', cat: 'handling',  name: '빠른 손놀림',   desc: '재장전 25% 빠르게',          max: 4, stat: s => [s.reloadTime.toFixed(2), (s.reloadTime * 0.75).toFixed(2) + 's'], apply: s => { s.reloadTime *= 0.75; } },
   { id: 'damage', cat: 'firepower', name: '할로포인트탄', desc: '탄환 피해 +50%',         max: 6, stat: s => [s.damage + '×', s.damage + 0.5 + '×'],                       apply: s => { s.damage += 0.5; } },
   { id: 'rate',   cat: 'firepower', name: '민감한 방아쇠',  desc: '발사 속도 20% 증가',            max: 4, stat: s => [(1 / s.fireRate).toFixed(1), (1 / (s.fireRate * 0.8)).toFixed(1) + '/s'], apply: s => { s.fireRate *= 0.8; } },
@@ -3957,6 +4223,8 @@ function spawnBlood(pos) {
 // ===================================================================
 // DEBUG (documented in the README): ?wave=N starts the run at wave N (e.g. ?wave=5 for the first boss)
 const DEBUG_WAVE = Math.max(0, Math.min(99, parseInt(new URLSearchParams(location.search).get('wave'), 10) || 0));
+// DEBUG (documented in the README): ?weapons=all unlocks all four weapons (and 3 grenades) from the start
+const DEBUG_WEAPONS = new URLSearchParams(location.search).get('weapons') === 'all';
 
 // What a wave is made of. Waves 1-2: zombies only. Skeletons from wave 3 (a growing share), small
 // monsters from wave 4 (they come in packs of 3-4 and count half a zombie each against the budget),
@@ -3997,6 +4265,13 @@ function spawnNext() {
 
 function startWave(n) {
   state.wave = n;
+  // weapons unlock with the waves: 샷건 3, 소총 6, 저격총 9
+  const fresh = WEAPONS.map((w, i) => i).filter(i => !state.unlocked[i] && n >= WEAPONS[i].unlock);
+  if (fresh.length) {
+    fresh.forEach(i => unlockWeapon(i));
+    showToast('새 무기 해금: ' + fresh.map(i => `${WEAPONS[i].name} [${i + 1}]`).join(', '), '#e8d28a', 2800);
+    audio.pickup('wpn');
+  }
   if (!DEBUG_WAVE) {
     if (n >= 5) wvUnlock("WAVE_5");
     if (n >= 10) wvUnlock("WAVE_10");
@@ -4027,6 +4302,8 @@ function clearRun() {
   for (const z of zombies) scene.remove(z);
   for (const p of particles) scene.remove(p);
   for (const d of drops) scene.remove(d);
+  for (const b of blasts) { scene.remove(b.ball, b.ring); b.ball.material.dispose(); b.ring.material.dispose(); }
+  blasts.length = 0;
   for (const d of debris) scene.remove(d);
   removeCorpses();
   bossRef = null;
@@ -4048,7 +4325,11 @@ function resetGame(keep = false) {
     fireCd: 0, dmgCd: 0, toSpawn: 0, queue: [], chip: 0, spawnTimer: 0,
     intermission: 0, choosing: false, shake: 0, upgrades: {},
     pDamage: 0, pAmmo: 0, sinceDrop: 0,
+    reloadLen: BASE_STATS.reloadTime, weapon: 0, nadeCd: 0,
+    unlocked: WEAPONS.map((w, i) => i === 0 || DEBUG_WEAPONS), ammo: WEAPONS.map(w => w.mag),
+    grenades: DEBUG_WEAPONS ? 3 : 0,
   });
+  applyWeaponLook(0);
   if (keep) {
     state.intermission = SWOOP_TIME * 0.85;
     if (DEBUG_WAVE > 1) state.wave = DEBUG_WAVE - 1; // the intermission ends in startWave(wave + 1)
@@ -4535,10 +4816,11 @@ function update(dt) {
     if (firing && !state.choosing) fire();
     if (state.reloading) {
       state.reloadT += dt;
-      if (state.reloadT >= state.reloadTime) finishReload();
+      if (state.reloadT >= state.reloadLen) finishReload();
     }
     state.pDamage = Math.max(0, state.pDamage - dt);
     state.pAmmo = Math.max(0, state.pAmmo - dt);
+    state.nadeCd -= dt;
     updateDrops(dt);
 
     // --- waves ---
@@ -4588,7 +4870,7 @@ function update(dt) {
   for (let i = bullets.length - 1; i >= 0; i--) {
     const b = bullets[i];
     const px = b.position.x, pz = b.position.z;
-    b.position.addScaledVector(b.userData.dir, 38 * dt);
+    b.position.addScaledVector(b.userData.dir, b.userData.speed * dt);
     b.userData.life -= dt;
     let hit = false;
     // wall collision: sample the path traveled this frame so fast bullets
@@ -4614,10 +4896,11 @@ function update(dt) {
       const t = Math.max(0, Math.min(1, ((z.position.x - px) * sx + (z.position.z - pz) * sz) / (sx * sx + sz * sz || 1)));
       const dx = z.position.x - (px + sx * t), dz = z.position.z - (pz + sz * t);
       if (dx * dx + dz * dz < z.userData.hitR2) {
-        z.userData.hp -= state.damage * (state.pDamage > 0 ? 2 : 1);
+        const bu = b.userData, falloff = bu.fall ? 1 - bu.fall * (1 - bu.life / bu.maxLife) : 1; // shotgun pellets lose punch with range
+        z.userData.hp -= state.damage * bu.dmg * falloff * (state.pDamage > 0 ? 2 : 1);
         hitZombie(z);
         // small knockback
-        z.position.addScaledVector(b.userData.dir, z.userData.kb);
+        z.position.addScaledVector(b.userData.dir, z.userData.kb * bu.kb);
         if (z.userData.hp <= 0) { audio.zdeath(z.position); killZombie(z, j, b.userData.dir); }
         else audio.hit(z.position);
         b.userData.hits.add(z);
@@ -4654,6 +4937,7 @@ function update(dt) {
     if (p.userData.life <= 0) { scene.remove(p); particles.splice(i, 1); }
   }
 
+  updateBlasts(dt);
   updateCorpses(dt);
   updateOpenings(dt);
   updateWeather(dt);
