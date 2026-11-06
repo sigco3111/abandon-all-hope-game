@@ -1,0 +1,4 @@
+zombie.glb: "Zombie_Male" from the Ultimate Animated Character Pack by Quaternius (https://quaternius.com), CC0 1.0.
+Converted from FBX to GLB (materials simplified, per-material meshes merged, clip names shortened).
+Animation clips: Victory, SitDown, Shoot_OneHanded, PickUp, RecieveHit, Idle, Defeat, Walk, Walk_Carry, StandUp, Punch.
+Used by the game: Idle, Walk, Punch, Defeat.
