@@ -1775,6 +1775,9 @@ const DECOR_FIRES = []; // the two fire baskets near the cabin: { light, flame, 
   scatterAt(['dead_tree'], 3, 0, 0, 15, 24, {});
   scatterAt(['barrel', 'crate', 'crate'], 4, 12, 9, 0.5, 3.2, {});
 
+  // and keep the random forest off both door lanes (a tree could otherwise grow right in front of a door)
+  CLEARINGS.push([0, 13.5, 3.2], [-5, -13.8, 3.2]);
+
   // two real lights, nothing more: they sit on the baskets and stay dark until a basket's model has loaded
   for (const p of DECOR_PLACE.filter(q => q.k === 'fire_basket')) {
     const light = new THREE.PointLight(0xff9a45, 0, 10, 2);
