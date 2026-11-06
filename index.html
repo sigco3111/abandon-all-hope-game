@@ -1,18 +1,18 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-<title>ABANDON ALL HOPE</title>
+<title>모든 희망을 버려라 (ABANDON ALL HOPE)</title>
 <link rel="icon" type="image/png" sizes="32x32" href="favicon.png" />
 <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png" />
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Anton&family=Jersey+25&family=Jim+Nightshade&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Anton&family=Jersey+25&family=Jim+Nightshade&family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;700&display=swap');
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { width: 100%; height: 100%; overflow: hidden; background: #05060a; }
   #game { display: block; width: 100vw; height: 100vh; }
-  body { font-family: "Jersey 25", "Courier New", monospace; color: #cdd2d8; }
+  body { font-family: "Jersey 25", "Noto Sans KR", "Courier New", monospace; color: #cdd2d8; }
 
   /* worn, chipped-paint look for the big Anton titles (matches the store cover art) */
   .distressed {
@@ -58,7 +58,7 @@
   /* banner */
   #banner {
     position: fixed; top: 38%; left: 0; right: 0; text-align: center;
-    font-family: "Jim Nightshade", cursive;
+    font-family: "Jim Nightshade", "Black Han Sans", cursive;
     font-size: 72px; letter-spacing: 8px; color: #d6453c; opacity: 0;
     text-shadow: 0 0 18px #d6453c66, 0 0 4px #000; transition: opacity .35s;
   }
@@ -81,7 +81,7 @@
     background: radial-gradient(circle at center, rgba(10,8,10,.5), rgba(2,2,4,.85));
     z-index: 5;
   }
-  #pickerTitle { font-family: "Jim Nightshade", cursive; font-size: 64px; letter-spacing: 6px; color: #d6453c; text-shadow: 0 0 18px #d6453c66, 0 0 4px #000; }
+  #pickerTitle { font-family: "Jim Nightshade", "Black Han Sans", cursive; font-size: 64px; letter-spacing: 6px; color: #d6453c; text-shadow: 0 0 18px #d6453c66, 0 0 4px #000; }
   #pickerSub { font-size: 16px; letter-spacing: 6px; color: #8a9098; margin-top: 2px; }
   #pickerSub::before, #pickerSub::after { content: ""; display: inline-block; width: 40px; height: 1px; background: #4a4f58; vertical-align: middle; margin: 0 14px; }
   #cards { display: flex; gap: 22px; margin-top: 34px; perspective: 900px; }
@@ -118,7 +118,7 @@
   .ctop { width: 100%; display: flex; justify-content: space-between; align-items: center; font-size: 13px; letter-spacing: 3px; color: var(--accent); }
   .ckey { min-width: 20px; padding: 0 5px; border: 1px solid #3a3d45; color: #cdd2d8; font-size: 14px; letter-spacing: 0; text-align: center; }
   .cicon { width: 64px; height: 64px; margin: 16px 0 14px; color: var(--accent); filter: drop-shadow(0 0 6px var(--accent)); transition: filter .14s, transform .14s; }
-  .cname { font-family: "Anton", sans-serif; font-size: 26px; letter-spacing: 2px; color: #e9e2d6; line-height: 1; text-shadow: 0 2px 0 #000; }
+  .cname { font-family: "Anton", "Black Han Sans", sans-serif; font-size: 26px; letter-spacing: 2px; color: #e9e2d6; line-height: 1; text-shadow: 0 2px 0 #000; }
   .cdesc { font-size: 18px; color: #9aa0a8; margin-top: 8px; line-height: 1.15; min-height: 42px; text-align: center; }
   .cstat { width: 100%; margin-top: 10px; padding-top: 10px; border-top: 1px solid #25262b; font-size: 20px; letter-spacing: 1px; color: #6a7078; }
   .cstat b { font-weight: normal; color: var(--accent); }
@@ -169,7 +169,7 @@
     position: absolute; left: clamp(32px, 7vw, 130px); top: 50%; transform: translateY(-54%);
     width: min(560px, 46vw);
   }
-  #title { font-family: "Anton", sans-serif; line-height: .86; filter: drop-shadow(0 4px 0 #000) drop-shadow(0 0 30px #d6453c40); }
+  #title { font-family: "Anton", "Black Han Sans", sans-serif; line-height: .86; filter: drop-shadow(0 4px 0 #000) drop-shadow(0 0 30px #d6453c40); }
   #titleTop { font-size: clamp(26px, 3.3vw, 50px); letter-spacing: .5em; color: #e9e2d6; }
   #titleMain { font-size: clamp(64px, 8.6vw, 128px); letter-spacing: 4px; color: #d6453c; margin-left: -3px; }
 
@@ -193,7 +193,7 @@
   #menuList button:nth-of-type(4) { animation-delay: .21s; }
   @keyframes itemIn { from { opacity: 0; transform: translateX(-28px); } }
   #menuList button i { font-style: normal; font-size: 17px; letter-spacing: 2px; color: #444a53; transition: color .16s; }
-  #menuList button span { font-family: "Anton", sans-serif; font-size: clamp(30px, 2.6vw, 40px); letter-spacing: 3px; line-height: 1.1; }
+  #menuList button span { font-family: "Anton", "Black Han Sans", sans-serif; font-size: clamp(30px, 2.6vw, 40px); letter-spacing: 3px; line-height: 1.1; }
   #menuList button.sel { color: #ece6db; transform: translateX(12px); }
   #menuList button.sel i { color: #d6453c; }
   #menuList button.sel span { text-shadow: 0 0 22px #d6453c55, 0 2px 0 #000; }
@@ -227,7 +227,7 @@
   }
   .mpanel::before { content: ""; position: absolute; left: -1px; right: -1px; top: -1px; height: 3px; background: #d6453c; box-shadow: 0 0 12px #d6453c; }
   .mpanel.open { opacity: 1; visibility: visible; transform: translate(0, -50%); transition-delay: 0s; }
-  .mpanel h2 { font-family: "Anton", sans-serif; font-weight: normal; font-size: 30px; letter-spacing: 3px; color: #e9e2d6; }
+  .mpanel h2 { font-family: "Anton", "Black Han Sans", sans-serif; font-weight: normal; font-size: 30px; letter-spacing: 3px; color: #e9e2d6; }
   .mrows { margin-top: 14px; display: flex; flex-direction: column; }
   .crow { display: flex; align-items: center; gap: 16px; padding: 6px 0; border-bottom: 1px solid #1f1f24; font-size: 19px; letter-spacing: 2px; }
   .crow .caps { width: 150px; display: flex; }
@@ -260,7 +260,7 @@
   #deathBest.record { color: #e8d28a; }
   /* the pause and death menus */
   #pause { background: radial-gradient(circle at center, rgba(10,8,10,.55), rgba(2,2,4,.85)); }
-  #pauseTitle { font-family: "Anton", sans-serif; font-size: clamp(64px, 10vw, 140px); letter-spacing: 10px; padding-left: 10px; color: #e9e2d6; filter: drop-shadow(0 4px 0 #000) drop-shadow(0 0 28px #d6453c44); }
+  #pauseTitle { font-family: "Anton", "Black Han Sans", sans-serif; font-size: clamp(64px, 10vw, 140px); letter-spacing: 10px; padding-left: 10px; color: #e9e2d6; filter: drop-shadow(0 4px 0 #000) drop-shadow(0 0 28px #d6453c44); }
   #pauseStat { color: #8a9098; font-size: 18px; letter-spacing: 4px; margin-top: 14px; }
   .vmenu { display: flex; flex-direction: column; gap: 6px; margin-top: 34px; }
   .vmenu button {
@@ -271,7 +271,7 @@
   .vmenu button:hover { color: #e9e2d6; text-shadow: 0 0 12px #d6453c88; }
   .vmenu button:hover::before { content: "›"; }
   .vmenu button:hover::after { content: "‹"; }
-  #deathTitle { font-family: "Anton", sans-serif; font-size: clamp(72px, 12vw, 170px); letter-spacing: 10px; color: #b8332b; filter: drop-shadow(0 4px 0 #000) drop-shadow(0 0 28px #b8332b55); }
+  #deathTitle { font-family: "Anton", "Black Han Sans", sans-serif; font-size: clamp(72px, 12vw, 170px); letter-spacing: 10px; color: #b8332b; filter: drop-shadow(0 4px 0 #000) drop-shadow(0 0 28px #b8332b55); }
   #deathStat { color: #d6453c; font-size: 22px; letter-spacing: 4px; margin-top: 22px; }
 </style>
 <script type="importmap">
@@ -284,12 +284,12 @@
 <div id="hud">
   <div id="topbar">
     <div>
-      <div class="stat"><span class="label">WAVE</span> <span id="waveNum">1</span></div>
+      <div class="stat"><span class="label">웨이브</span> <span id="waveNum">1</span></div>
       <div id="health"></div>
       <div id="powerups"></div>
     </div>
     <div class="stat" style="text-align:right">
-      <span class="label">KILLS</span> <span id="kills">0</span><br>
+      <span class="label">처치</span> <span id="kills">0</span><br>
       <span class="label" id="zleft"></span>
     </div>
   </div>
@@ -297,7 +297,7 @@
   <div id="ammoWrap">
     <div id="mag"></div>
     <div id="reloadBar"><div id="reloadFill"></div></div>
-    <div id="reloadHint">[R] RELOAD</div>
+    <div id="reloadHint">[R] 재장전</div>
   </div>
 
   <div id="banner"><span id="bannerText"></span><span id="bannerSub"></span></div>
@@ -316,35 +316,35 @@
 <div id="menu" class="splash">
   <div id="menuShade"></div>
   <div id="menuCol">
-    <div id="title"><div id="titleTop" class="distressed">ABANDON</div><div id="titleMain" class="distressed">ALL HOPE</div></div>
-    <div id="pressAny">PRESS ANY KEY</div>
+    <div id="title"><div id="titleTop" class="distressed">모든 희망을</div><div id="titleMain" class="distressed">버려라</div></div>
+    <div id="pressAny">아무 키나 누르세요</div>
     <nav id="menuList">
       <div id="menuMarker"></div>
-      <button data-act="play"><i>01</i><span>PLAY</span></button>
-      <button data-act="how"><i>02</i><span>HOW TO PLAY</span></button>
-      <button data-act="settings"><i>03</i><span>SETTINGS</span></button>
-      <button data-act="wavedash"><i>04</i><span>PLAY ON WAVEDASH</span></button>
+      <button data-act="play"><i>01</i><span>플레이</span></button>
+      <button data-act="how"><i>02</i><span>조작 방법</span></button>
+      <button data-act="settings"><i>03</i><span>설정</span></button>
+      <button data-act="wavedash"><i>04</i><span>WAVEDASH에서 플레이</span></button>
     </nav>
   </div>
 
   <section id="howPanel" class="mpanel">
-    <h2>HOW TO PLAY</h2>
+    <h2>조작 방법</h2>
     <div class="mrows">
-      <div class="crow"><span class="caps"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span><b>MOVE</b></div>
-      <div class="crow"><span class="caps"><kbd class="wide">MOUSE</kbd></span><b>AIM</b></div>
-      <div class="crow"><span class="caps"><kbd class="wide">CLICK</kbd></span><b>SHOOT</b><em>hold to keep firing</em></div>
-      <div class="crow"><span class="caps"><kbd>R</kbd></span><b>RELOAD</b></div>
-      <div class="crow"><span class="caps"><kbd class="wide">ESC</kbd></span><b>PAUSE</b></div>
-      <div class="crow"><span class="caps"><kbd>M</kbd></span><b>MUTE</b></div>
+      <div class="crow"><span class="caps"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span><b>이동</b></div>
+      <div class="crow"><span class="caps"><kbd class="wide">마우스</kbd></span><b>조준</b></div>
+      <div class="crow"><span class="caps"><kbd class="wide">클릭</kbd></span><b>사격</b><em>누르고 있으면 연사</em></div>
+      <div class="crow"><span class="caps"><kbd>R</kbd></span><b>재장전</b></div>
+      <div class="crow"><span class="caps"><kbd class="wide">ESC</kbd></span><b>일시정지</b></div>
+      <div class="crow"><span class="caps"><kbd>M</kbd></span><b>음소거</b></div>
     </div>
   </section>
 
   <section id="settingsPanel" class="mpanel">
-    <h2>SETTINGS</h2>
+    <h2>설정</h2>
     <div class="mrows" id="settingRows">
-      <div class="srow" data-key="master"><b>MASTER VOLUME</b><span class="meter"></span><em></em></div>
-      <div class="srow" data-key="music"><b>MUSIC VOLUME</b><span class="meter"></span><em></em></div>
-      <div class="srow" data-key="shake"><b>SCREEN SHAKE</b><span class="toggle"></span><em></em></div>
+      <div class="srow" data-key="master"><b>전체 음량</b><span class="meter"></span><em></em></div>
+      <div class="srow" data-key="music"><b>음악 음량</b><span class="meter"></span><em></em></div>
+      <div class="srow" data-key="shake"><b>화면 흔들림</b><span class="toggle"></span><em></em></div>
     </div>
   </section>
 
@@ -356,22 +356,22 @@
 <div id="fadeIn"></div>
 
 <div id="pause" class="overlay hidden">
-  <div id="pauseTitle" class="distressed">PAUSED</div>
+  <div id="pauseTitle" class="distressed">일시정지</div>
   <div id="pauseStat"></div>
   <div id="pauseMenu" class="vmenu">
-    <button id="resumeBtn">RESUME</button>
-    <button id="quitBtn">QUIT TO TITLE</button>
+    <button id="resumeBtn">계속하기</button>
+    <button id="quitBtn">타이틀로 나가기</button>
   </div>
-  <div class="sub" style="margin-top:28px"><span class="key">ESC</span> resume</div>
+  <div class="sub" style="margin-top:28px"><span class="key">ESC</span> 계속하기</div>
 </div>
 
 <div id="death" class="overlay hidden">
-  <div id="deathTitle" class="distressed">YOU DIED</div>
+  <div id="deathTitle" class="distressed">사망했습니다</div>
   <div id="deathStat"></div>
   <div id="deathBest"></div>
   <div id="deathMenu" class="vmenu">
-    <button id="retryBtn">TRY AGAIN</button>
-    <button id="deathQuitBtn">MAIN MENU</button>
+    <button id="retryBtn">다시 도전</button>
+    <button id="deathQuitBtn">메인 메뉴</button>
   </div>
 </div>
 
@@ -2585,7 +2585,7 @@ window.addEventListener('keydown', e => {
   if (state.choosing && /^Digit[1-3]$/.test(e.code)) choose(+e.code.slice(5) - 1);
   if (e.code === 'KeyM') {
     const m = audio.toggleMute();
-    document.getElementById('reloadHint').textContent = m ? '[R] RELOAD   ·   [M] MUTED' : '[R] RELOAD';
+    document.getElementById('reloadHint').textContent = m ? '[R] 재장전   ·   [M] 음소거 중' : '[R] 재장전';
   }
 });
 window.addEventListener('keyup', e => { keys[e.code] = false; });
@@ -2640,14 +2640,14 @@ function updateHUD() {
   hud.wave.textContent = state.wave;
   hud.kills.textContent = state.kills;
   const remaining = zombies.length + state.toSpawn;
-  hud.zleft.textContent = state.intermission > 0 || state.choosing ? '' : remaining + ' LEFT';
+  hud.zleft.textContent = state.intermission > 0 || state.choosing ? '' : remaining + ' 남음';
   if (hud.health.children.length !== state.maxHp) hud.health.innerHTML = pixelIcon(UPGRADE_ICONS.heal, 'pip').repeat(state.maxHp);
   [...hud.health.children].forEach((p, i) => p.classList.toggle('dead', i >= state.hp));
   // power-up time left as a clock: 0:10 … 0:01
   const clock = t => { const s = Math.ceil(t); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
   let pu = '';
-  if (state.pDamage > 0) pu += `<div style="color:#ff7a2e">DOUBLE DAMAGE ${clock(state.pDamage)}</div>`;
-  if (state.pAmmo > 0) pu += `<div style="color:#e8d28a">BOTTOMLESS MAG ${clock(state.pAmmo)}</div>`;
+  if (state.pDamage > 0) pu += `<div style="color:#ff7a2e">더블 데미지 ${clock(state.pDamage)}</div>`;
+  if (state.pAmmo > 0) pu += `<div style="color:#e8d28a">무한 탄창 ${clock(state.pAmmo)}</div>`;
   hud.powerups.innerHTML = pu;
   let m = '';
   for (let i = 0; i < state.magSize; i++) {
@@ -3378,9 +3378,9 @@ function killZombie(z, idx, dir) {
 // DROPS — supplies zombies sometimes leave behind
 // ===================================================================
 const DROP_TYPES = [
-  { id: 'med',  name: '+1 HEALTH',      color: 0xd6453c, weight: 40 },
-  { id: 'dmg',  name: 'DOUBLE DAMAGE',  color: 0xff7a2e, weight: 25 },
-  { id: 'ammo', name: 'BOTTOMLESS MAG', color: 0xe8d28a, weight: 25 },
+  { id: 'med',  name: '체력 +1',      color: 0xd6453c, weight: 40 },
+  { id: 'dmg',  name: '더블 데미지',  color: 0xff7a2e, weight: 25 },
+  { id: 'ammo', name: '무한 탄창', color: 0xe8d28a, weight: 25 },
 ];
 // each pickup is a little blocky item in a soft glow of its color
 const K = 0x1a1a1a;
@@ -3470,16 +3470,16 @@ function updateDrops(dt) {
 // Each card can be taken up to `max` times per run. `ok` (optional) hides a
 // card while it would do nothing. `stat` returns [now, after] for the card.
 const UPGRADES = [
-  { id: 'mag',    cat: 'handling',  name: 'EXTENDED MAG',  desc: '+4 rounds per magazine',     max: 5, stat: s => [s.magSize, s.magSize + 4 + ' rds'],                            apply: s => { s.magSize += 4; s.mag = s.magSize; } },
-  { id: 'reload', cat: 'handling',  name: 'QUICK HANDS',   desc: 'reload 25% faster',          max: 4, stat: s => [s.reloadTime.toFixed(2), (s.reloadTime * 0.75).toFixed(2) + 's'], apply: s => { s.reloadTime *= 0.75; } },
-  { id: 'damage', cat: 'firepower', name: 'HOLLOW POINTS', desc: '+50% bullet damage',         max: 6, stat: s => [s.damage + '×', s.damage + 0.5 + '×'],                       apply: s => { s.damage += 0.5; } },
-  { id: 'rate',   cat: 'firepower', name: 'HAIR TRIGGER',  desc: 'fire 20% faster',            max: 4, stat: s => [(1 / s.fireRate).toFixed(1), (1 / (s.fireRate * 0.8)).toFixed(1) + '/s'], apply: s => { s.fireRate *= 0.8; } },
-  { id: 'pierce', cat: 'firepower', name: 'PIERCING',      desc: 'shots pierce +1 zombie', max: 3, stat: s => [s.pierce, s.pierce + 1 + ' thru'],                     apply: s => { s.pierce++; } },
-  { id: 'spread', cat: 'firepower', name: 'BUCKSHOT',      desc: '+1 bullet per shot', max: 3, stat: s => [1 + s.spread, 2 + s.spread + ' per shot'],             apply: s => { s.spread++; } },
-  { id: 'hp',     cat: 'survival',  name: 'THICK SKIN',    desc: '+1 max health, and heal it', max: 3, stat: s => [s.maxHp, s.maxHp + 1 + ' max hp'],                         apply: s => { s.maxHp++; s.hp++; } },
-  { id: 'speed',  cat: 'survival',  name: 'FLEET FOOT',    desc: 'move 12% faster',            max: 3, stat: s => [Math.round(s.speed / 6.2 * 100) + '%', Math.round(s.speed * 1.12 / 6.2 * 100) + '%'], apply: s => { s.speed *= 1.12; } },
-  { id: 'luck',   cat: 'fortune',   name: 'SCAVENGER',     desc: 'more supply drops', max: 3, stat: s => [Math.round((DROP_CHANCE + s.dropBonus) * 100) + '%', Math.round((DROP_CHANCE + s.dropBonus + 0.03) * 100) + '% drops'], apply: s => { s.dropBonus += 0.03; } },
-  { id: 'heal',   cat: 'survival',  name: 'PATCH UP',      desc: 'restore all health',         max: Infinity, ok: s => s.hp < s.maxHp, stat: s => [s.hp, s.maxHp + ' hp'], apply: s => { s.hp = s.maxHp; } },
+  { id: 'mag',    cat: 'handling',  name: '확장 탄창',  desc: '탄창당 +4발',     max: 5, stat: s => [s.magSize, s.magSize + 4 + '발'],                            apply: s => { s.magSize += 4; s.mag = s.magSize; } },
+  { id: 'reload', cat: 'handling',  name: '빠른 손놀림',   desc: '재장전 25% 빠르게',          max: 4, stat: s => [s.reloadTime.toFixed(2), (s.reloadTime * 0.75).toFixed(2) + 's'], apply: s => { s.reloadTime *= 0.75; } },
+  { id: 'damage', cat: 'firepower', name: '할로포인트탄', desc: '탄환 피해 +50%',         max: 6, stat: s => [s.damage + '×', s.damage + 0.5 + '×'],                       apply: s => { s.damage += 0.5; } },
+  { id: 'rate',   cat: 'firepower', name: '민감한 방아쇠',  desc: '발사 속도 20% 증가',            max: 4, stat: s => [(1 / s.fireRate).toFixed(1), (1 / (s.fireRate * 0.8)).toFixed(1) + '/s'], apply: s => { s.fireRate *= 0.8; } },
+  { id: 'pierce', cat: 'firepower', name: '관통탄',      desc: '좀비 +1마리 관통', max: 3, stat: s => [s.pierce, s.pierce + 1 + '마리 관통'],                     apply: s => { s.pierce++; } },
+  { id: 'spread', cat: 'firepower', name: '산탄',      desc: '발사당 탄환 +1', max: 3, stat: s => [1 + s.spread, 2 + s.spread + '발/회'],             apply: s => { s.spread++; } },
+  { id: 'hp',     cat: 'survival',  name: '두꺼운 피부',    desc: '최대 체력 +1, 즉시 회복', max: 3, stat: s => [s.maxHp, s.maxHp + 1 + ' 최대 체력'],                         apply: s => { s.maxHp++; s.hp++; } },
+  { id: 'speed',  cat: 'survival',  name: '날쌘 발',    desc: '이동 속도 12% 증가',            max: 3, stat: s => [Math.round(s.speed / 6.2 * 100) + '%', Math.round(s.speed * 1.12 / 6.2 * 100) + '%'], apply: s => { s.speed *= 1.12; } },
+  { id: 'luck',   cat: 'fortune',   name: '수색꾼',     desc: '보급품 드랍 증가', max: 3, stat: s => [Math.round((DROP_CHANCE + s.dropBonus) * 100) + '%', Math.round((DROP_CHANCE + s.dropBonus + 0.03) * 100) + '% 드랍'], apply: s => { s.dropBonus += 0.03; } },
+  { id: 'heal',   cat: 'survival',  name: '응급 처치',      desc: '체력 전부 회복',         max: Infinity, ok: s => s.hp < s.maxHp, stat: s => [s.hp, s.maxHp + ' 체력'], apply: s => { s.hp = s.maxHp; } },
 ];
 const UPGRADE_CATS = {
   firepower: '#d6453c',
@@ -3507,6 +3507,7 @@ function pixelIcon(rows, cls = 'cicon') {
   }));
   return `<svg class="${cls}" viewBox="0 0 8 8" shape-rendering="crispEdges" fill="currentColor">${r}</svg>`;
 }
+const UPGRADE_CAT_KO = { firepower: '화력', handling: '조작', survival: '생존', fortune: '행운' };
 let offered = [];
 const PICK_LOCKOUT_MS = 650; // ~ when the last card finishes dealing in
 
@@ -3518,15 +3519,15 @@ function openPicker(healed) {
   state.choosing = true;
   clearTimeout(choose._t);
   clearTimeout(openPicker._t);
-  hud.pickerTitle.textContent = 'WAVE ' + state.wave + ' CLEARED';
-  hud.pickerSub.textContent = (healed ? '+1 HEALTH  ·  ' : '') + 'CHOOSE ONE';
+  hud.pickerTitle.textContent = '웨이브 ' + state.wave + ' 클리어';
+  hud.pickerSub.textContent = (healed ? '체력 +1  ·  ' : '') + '하나를 선택하세요';
   hud.cards.innerHTML = offered.map((u, i) => {
     const owned = state.upgrades[u.id] || 0;
     const [now, after] = u.stat(state);
     const pips = u.max === Infinity ? '' :
       Array.from({ length: u.max }, (_, k) => `<i class="${k < owned ? 'own' : k === owned ? 'next' : ''}"></i>`).join('');
     return `<div class="card" data-i="${i}" style="--accent:${UPGRADE_CATS[u.cat]};animation-delay:${i * 90}ms">` +
-      `<div class="ctop"><span>${u.cat.toUpperCase()}</span><span class="ckey">${i + 1}</span></div>` +
+      `<div class="ctop"><span>${UPGRADE_CAT_KO[u.cat]}</span><span class="ckey">${i + 1}</span></div>` +
       pixelIcon(UPGRADE_ICONS[u.id]) +
       `<div class="cname">${u.name}</div><div class="cdesc">${u.desc}</div>` +
       `<div class="cstat">${now} → <b>${after}</b></div>` +
@@ -3589,8 +3590,8 @@ function startWave(n) {
   state.spawnTimer = 0;
   state.intermission = 0;
   weather.target = stormFor(n);
-  const omens = { 1: 'they are already here', 5: 'it starts to rain', 8: 'the rain sets in', 12: 'the storm breaks', 15: 'god help you' };
-  showBanner('WAVE ' + n, omens[n] || 'it gets worse');
+  const omens = { 1: '이미 여기 있다', 5: '비가 내리기 시작한다', 8: '비가 거세진다', 12: '폭풍이 몰아친다', 15: '신이시여, 도우소서' };
+  showBanner('웨이브 ' + n, omens[n] || '점점 더 심해진다');
   audio.waveStart(n);
 }
 
@@ -3649,7 +3650,7 @@ function setPaused(on) {
   state.paused = on;
   firing = false;
   for (const k in keys) keys[k] = false; // keyups are missed while the menu is up
-  document.getElementById('pauseStat').textContent = `WAVE ${state.wave} · ${state.kills} KILLS`;
+  document.getElementById('pauseStat').textContent = `웨이브 ${state.wave} · ${state.kills} 처치`;
   document.getElementById('pause').classList.toggle('hidden', !on);
   audio.pause(on);
 }
@@ -3666,12 +3667,12 @@ function die() {
   state.running = false;
   firing = false;
   document.getElementById('deathStat').textContent =
-    `YOU REACHED WAVE ${state.wave} · ${state.kills} KILLS`;
+    `웨이브 ${state.wave}까지 도달 · ${state.kills} 처치`;
   // best night is ranked by kills, like the leaderboard
   const best = store.get('best', null), record = state.kills > 0 && (!best || state.kills > best.kills);
   if (record) store.set('best', { wave: state.wave, kills: state.kills });
   const db = document.getElementById('deathBest');
-  db.textContent = record ? 'NEW BEST NIGHT' : best ? `BEST: WAVE ${best.wave} · ${best.kills} KILLS` : '';
+  db.textContent = record ? '최고 기록 갱신' : best ? `최고: 웨이브 ${best.wave} · ${best.kills} 처치` : '';
   db.classList.toggle('record', record);
   document.getElementById('death').classList.remove('hidden');
   audio.death();
@@ -3847,7 +3848,7 @@ const menu = {
     for (const r of settingRows) {
       const k = r.dataset.key, v = settings[k];
       if (k === 'shake') {
-        r.querySelector('.toggle').innerHTML = `<i class="${v ? 'on' : ''}" data-v="1">ON</i><i class="${v ? '' : 'on'}" data-v="0">OFF</i>`;
+        r.querySelector('.toggle').innerHTML = `<i class="${v ? 'on' : ''}" data-v="1">켜짐</i><i class="${v ? '' : 'on'}" data-v="0">꺼짐</i>`;
         r.querySelector('em').textContent = '';
       } else {
         r.querySelector('.meter').innerHTML = Array.from({ length: 10 }, (_, n) => `<i class="${n < v ? 'on' : ''}" data-v="${n + 1}"></i>`).join('');
@@ -3857,9 +3858,9 @@ const menu = {
   },
   hints() {
     const keys = this.panel === 'settings'
-      ? [['↑', '↓', 'SELECT'], ['←', '→', 'ADJUST'], ['ESC', 'BACK']]
-      : this.panel ? [['ESC', 'BACK']]
-      : [['↑', '↓', 'SELECT'], ['ENTER', 'CONFIRM']];
+      ? [['↑', '↓', '선택'], ['←', '→', '조절'], ['ESC', '뒤로']]
+      : this.panel ? [['ESC', '뒤로']]
+      : [['↑', '↓', '선택'], ['ENTER', '확인']];
     document.getElementById('menuHints').innerHTML = keys.map(k =>
       `<span>${k.slice(0, -1).map(c => `<kbd>${c}</kbd>`).join('')}${k[k.length - 1]}</span>`).join('');
   },
@@ -3897,7 +3898,7 @@ menu.drawSettings();
 function showBest() {
   const b = store.get('best', null);
   document.getElementById('bestRun').innerHTML = b
-    ? `<span class="lbl">BEST NIGHT</span>WAVE <b>${b.wave}</b> · <b>${b.kills}</b> KILLS`
+    ? `<span class="lbl">최고 기록</span>웨이브 <b>${b.wave}</b> · <b>${b.kills}</b> 처치`
     : '';
 }
 menuButtons.forEach((b, i) => {
