@@ -11,3 +11,12 @@ Converted from FBX to GLB (materials simplified, clip names shortened). Animatio
 
 boss_mech.glb: "Mike" from the Animated Mech Pack by Quaternius (https://quaternius.com), CC0 1.0.
 Converted from glTF to a single GLB (unlit material flag removed, textures embedded). Animation clips: Dance, Death, Hello, HitRecieve_1, HitRecieve_2, Idle, Jump, Kick, No, Pickup, Punch, Run, Run_Holding, Shoot, SwordSlash, Walk, Walk_Holding, Yes. Used by the game: Idle, Walk, Punch, Death.
+
+--- Scenery (assets/models/decor/*.glb), all CC0 1.0 ---
+Pure decoration for the cabin yard and interior (no gameplay effect). Models are kept as in the packs unless noted; they are scaled, tinted and instanced in code.
+gravestone_cross.glb, gravestone_round.glb, cross_wood.glb, iron_fence.glb, fire_basket.glb: "Graveyard Kit" by Kenney (https://kenney.nl/assets/graveyard-kit), CC0 1.0. (gravestoneCross, gravestoneRound, crossWood, ironFence, fireBasket; GLB copied unchanged)
+rock_large.glb, bush_large.glb: "Nature Kit" by Kenney (https://kenney.nl/assets/nature-kit), CC0 1.0. (rock_largeA, plant_bushLarge; GLB copied unchanged)
+bed_single.glb, table.glb: "Furniture Kit" by Kenney (https://kenney.nl/assets/furniture-kit), CC0 1.0. (bedSingle, table; GLB copied unchanged)
+dead_tree.glb, jack_o_lantern.glb: "KayKit - Halloween Bits" by Kay Lousberg (https://kaylousberg.itch.io/halloween-bits), CC0 1.0. (tree_dead_large, pumpkin_orange_jackolantern; converted from glTF to a single GLB with the texture embedded)
+barrel.glb, crate.glb: "Medieval Village Pack" by Quaternius (https://quaternius.com), CC0 1.0. (Barrel, Crate; converted from OBJ/MTL to GLB)
+Source collection: https://github.com/sigco3111/assets-3d-lowpoly
