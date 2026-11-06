@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover" />
 <title>모든 희망을 버려라 (ABANDON ALL HOPE)</title>
 <link rel="icon" type="image/png" sizes="32x32" href="favicon.png" />
 <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png" />
@@ -10,7 +10,8 @@
   @import url('https://fonts.googleapis.com/css2?family=Anton&family=Jersey+25&family=Jim+Nightshade&family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;700&display=swap');
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  html, body { width: 100%; height: 100%; overflow: hidden; background: #05060a; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: #05060a; overscroll-behavior: none; }
+  body.touch, body.touch * { touch-action: none; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
   #game { display: block; width: 100vw; height: 100vh; }
   body { font-family: "Jersey 25", "Noto Sans KR", "Courier New", monospace; color: #cdd2d8; }
 
@@ -78,6 +79,7 @@
     text-shadow: 0 0 18px #d6453c66, 0 0 4px #000; transition: opacity .35s;
   }
   #bannerSub { display:block; font-size: 16px; letter-spacing: 4px; color:#8a9098; margin-top: 10px; }
+  #waveTheme { color: #8a9098; font-size: 12px; letter-spacing: 2px; margin-left: 6px; }
 
   /* pickup toast */
   #toast {
@@ -206,6 +208,7 @@
   #menuList button:nth-of-type(2) { animation-delay: .07s; }
   #menuList button:nth-of-type(3) { animation-delay: .14s; }
   #menuList button:nth-of-type(4) { animation-delay: .21s; }
+  #menuList button:nth-of-type(5) { animation-delay: .28s; }
   @keyframes itemIn { from { opacity: 0; transform: translateX(-28px); } }
   #menuList button i { font-style: normal; font-size: 17px; letter-spacing: 2px; color: #444a53; transition: color .16s; }
   #menuList button span { font-family: "Anton", "Black Han Sans", sans-serif; font-size: clamp(30px, 2.6vw, 40px); letter-spacing: 3px; line-height: 1.1; }
@@ -271,6 +274,19 @@
   #menu.gone #menuFoot { transform: translateY(20px); }
   #menu.gone #menuShade { opacity: 0; }
 
+  /* 기록 panel */
+  .recsum { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 18px; margin-top: 16px; }
+  .recsum div { border-left: 3px solid #d6453c; padding: 2px 0 2px 10px; font-size: 14px; letter-spacing: 2px; color: #6c727b; }
+  .recsum b { display: block; font-weight: normal; font-size: 28px; letter-spacing: 1px; color: #e9e2d6; }
+  .recsub { margin-top: 20px; font-size: 15px; letter-spacing: 4px; color: #d6453c; }
+  #recList { list-style: none; margin-top: 6px; }
+  #recList li { display: grid; grid-template-columns: 34px 1fr 1fr auto; gap: 10px; padding: 6px 0; border-bottom: 1px solid #1f1f24; font-size: 18px; letter-spacing: 2px; color: #cdd2d8; }
+  #recList li i { font-style: normal; color: #5d6470; }
+  #recList li em { font-style: normal; color: #5d6470; font-size: 14px; align-self: center; }
+  #recList li.none { display: block; color: #5d6470; border: 0; }
+  .mclose { display: none; margin-top: 18px; font: inherit; font-size: 20px; letter-spacing: 4px; color: #8a9098; background: none; border: 1px solid #2c2f37; padding: 8px 22px; cursor: pointer; }
+  #deathRecord { margin-top: 18px; font-family: "Anton", "Black Han Sans", sans-serif; font-size: clamp(26px, 3.6vw, 44px); letter-spacing: 6px; color: #e8d28a; text-shadow: 0 0 20px #e8d28a66, 0 2px 0 #000; animation: blink 1.1s steps(2, start) infinite; }
+  #deathRecordSub { color: #b8a76a; font-size: 16px; letter-spacing: 4px; margin-top: 4px; }
   #deathBest { color: #8a9098; font-size: 16px; letter-spacing: 4px; margin-top: 8px; min-height: 1.2em; }
   #deathBest.record { color: #e8d28a; }
   /* the pause and death menus */
@@ -288,6 +304,89 @@
   .vmenu button:hover::after { content: "‹"; }
   #deathTitle { font-family: "Anton", "Black Han Sans", sans-serif; font-size: clamp(72px, 12vw, 170px); letter-spacing: 10px; color: #b8332b; filter: drop-shadow(0 4px 0 #000) drop-shadow(0 0 28px #b8332b55); }
   #deathStat { color: #d6453c; font-size: 22px; letter-spacing: 4px; margin-top: 22px; }
+  /* ---------- touch controls (only on touch devices, or with ?touch=1) ---------- */
+  #touchUI { position: fixed; inset: 0; z-index: 3; pointer-events: none; display: none; }
+  body.touch.playing #touchUI { display: block; }
+  .tzone { position: absolute; bottom: 0; height: 72%; pointer-events: auto; }
+  #tJoy { left: 0; width: 46%; }
+  #tAim { right: 0; width: 54%; }
+  .tbase, .tknob { position: absolute; border-radius: 50%; pointer-events: none; transform: translate(-50%, -50%); }
+  .tbase { width: 120px; height: 120px; border: 2px solid #ffffff44; background: #ffffff10; opacity: .35; }
+  .tknob { width: 54px; height: 54px; background: #ffffff55; border: 2px solid #ffffff88; }
+  #tAimBase { border-color: #d6453c88; background: #d6453c14; }
+  #tAimKnob { background: #d6453c66; border-color: #d6453caa; }
+  .tzone.on .tbase { opacity: .9; }
+  .tbtn {
+    position: absolute; pointer-events: auto; width: 64px; height: 64px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; text-align: center; line-height: 1.05;
+    font: inherit; font-size: 15px; letter-spacing: 0; color: #e9e2d6; background: #14161bcc; border: 2px solid #ffffff44;
+    box-shadow: 0 2px 10px #000a;
+  }
+  .tbtn:active, .tbtn.down { background: #d6453ccc; }
+  #tReload { right: calc(14px + env(safe-area-inset-right)); bottom: calc(150px + env(safe-area-inset-bottom)); }
+  #tNade { right: calc(88px + env(safe-area-inset-right)); bottom: calc(190px + env(safe-area-inset-bottom)); }
+  #tWeapon { right: calc(14px + env(safe-area-inset-right)); bottom: calc(228px + env(safe-area-inset-bottom)); }
+  #tPause { right: calc(12px + env(safe-area-inset-right)); top: calc(86px + env(safe-area-inset-top)); width: 46px; height: 46px; font-size: 20px; }
+  #tNade[hidden] { display: none; }
+  body.touch #reloadHint { display: none; }
+  body.touch .mpanel, body.touch .mpanel * { touch-action: pan-y; }
+  body.touch #pause .sub { display: none; }
+  .touchrow { display: none; }
+  body.touch .touchrow { display: flex; }
+  body.touch .kbrow { display: none; }
+  body.touch .mclose { display: inline-block; }
+
+  /* small screens: scale the HUD and the menus down */
+  @media (max-width: 820px), (max-height: 520px) {
+    #topbar { top: 8px; left: 10px; right: 10px; }
+    .stat { font-size: 11px; letter-spacing: 1px; line-height: 1.5; }
+    .pip { width: 15px; height: 15px; }
+    #health { gap: 3px; }
+    #powerups, #grenades { font-size: 11px; letter-spacing: 1px; margin-top: 4px; }
+    #ammoWrap { bottom: 8px; transform: translateX(-50%) scale(.72); transform-origin: 50% 100%; }
+    #bossBar { top: 8px; width: 34vw; }
+    #bossName { font-size: 11px; letter-spacing: 3px; }
+    #banner { font-size: clamp(34px, 9vw, 56px); letter-spacing: 4px; }
+    #bannerSub { font-size: 12px; letter-spacing: 2px; }
+    #toast { font-size: 18px; letter-spacing: 3px; }
+    #pickerTitle { font-size: 36px; letter-spacing: 3px; }
+    #pickerSub { font-size: 12px; letter-spacing: 3px; }
+    #cards { gap: 10px; margin-top: 16px; }
+    .card { width: min(30vw, 200px); padding: 8px 8px 10px; }
+    .cicon { width: 40px; height: 40px; margin: 8px 0; }
+    .cname { font-size: 17px; }
+    .cdesc { font-size: 13px; min-height: 30px; margin-top: 4px; }
+    .cstat { font-size: 14px; margin-top: 6px; padding-top: 6px; }
+    #menuCol { left: 24px; width: min(86vw, 520px); transform: translateY(-50%); }
+    #titleTop { font-size: clamp(20px, 5vw, 36px); }
+    #titleMain { font-size: clamp(48px, 13vw, 96px); }
+    #pressAny { margin-top: 28px; font-size: 16px; letter-spacing: 4px; }
+    #menuList { margin-top: 22px; }
+    #menuList button { padding: 4px 0 4px 20px; }
+    #menuList button span { font-size: clamp(22px, 5vw, 30px); }
+    #menuFoot { left: 24px; right: 16px; bottom: 12px; font-size: 11px; letter-spacing: 1px; flex-wrap: wrap; gap: 6px; }
+    #menuHints { display: none; }
+    .mpanel { left: 3vw; width: 94vw; max-height: 90vh; overflow-y: auto; padding: 16px 18px 18px; z-index: 3; }
+    .mpanel h2 { font-size: 24px; }
+    .crow { font-size: 15px; gap: 10px; padding: 4px 0; }
+    .crow .caps { width: 112px; }
+    .crow em { font-size: 12px; }
+    .srow { font-size: 16px; padding: 8px 12px; }
+    .mclose { display: inline-block; margin-top: 12px; }
+    .recsum b { font-size: 22px; }
+    #recList li { font-size: 15px; }
+    #pauseTitle { font-size: clamp(40px, 10vw, 80px); }
+    #pauseStat, #deathStat { font-size: 15px; }
+    .vmenu { margin-top: 18px; }
+    .vmenu button { font-size: 24px; padding: 4px 16px; }
+    #deathTitle { font-size: clamp(44px, 11vw, 90px); }
+    #deathRecord { margin-top: 10px; }
+    #tReload, #tNade, #tWeapon { width: 56px; height: 56px; font-size: 13px; }
+    #tReload { bottom: calc(110px + env(safe-area-inset-bottom)); }
+    #tNade { right: calc(80px + env(safe-area-inset-right)); bottom: calc(140px + env(safe-area-inset-bottom)); }
+    #tWeapon { bottom: calc(176px + env(safe-area-inset-bottom)); }
+  }
+  @media (max-height: 520px) { #tReload { bottom: calc(60px + env(safe-area-inset-bottom)); } #tNade { bottom: calc(96px + env(safe-area-inset-bottom)); right: calc(80px + env(safe-area-inset-right)); } #tWeapon { bottom: calc(132px + env(safe-area-inset-bottom)); } .tbase { width: 96px; height: 96px; } .tknob { width: 44px; height: 44px; } }
 </style>
 <script type="importmap">
 { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/" } }
@@ -299,7 +398,7 @@
 <div id="hud">
   <div id="topbar">
     <div>
-      <div class="stat"><span class="label">웨이브</span> <span id="waveNum">1</span></div>
+      <div class="stat"><span class="label">웨이브</span> <span id="waveNum">1</span><span id="waveTheme"></span></div>
       <div id="health"></div>
       <div id="powerups"></div>
       <div id="grenades"></div>
@@ -326,6 +425,16 @@
 
 <div id="flash"></div>
 
+<!-- touch controls: left stick moves, right area aims (drag) and fires (hold) -->
+<div id="touchUI">
+  <div id="tJoy" class="tzone"><div class="tbase" id="tJoyBase"></div><div class="tknob" id="tJoyKnob"></div></div>
+  <div id="tAim" class="tzone"><div class="tbase" id="tAimBase"></div><div class="tknob" id="tAimKnob"></div></div>
+  <button id="tWeapon" class="tbtn" type="button">무기<br>전환</button>
+  <button id="tNade" class="tbtn" type="button" hidden>수류탄</button>
+  <button id="tReload" class="tbtn" type="button">재장전</button>
+  <button id="tPause" class="tbtn" type="button" aria-label="일시정지">Ⅱ</button>
+</div>
+
 <div id="picker" class="hidden">
   <div id="pickerTitle"></div>
   <div id="pickerSub"></div>
@@ -343,21 +452,28 @@
       <button data-act="play"><i>01</i><span>플레이</span></button>
       <button data-act="how"><i>02</i><span>조작 방법</span></button>
       <button data-act="settings"><i>03</i><span>설정</span></button>
-      <button data-act="wavedash"><i>04</i><span>WAVEDASH에서 플레이</span></button>
+      <button data-act="records"><i>04</i><span>기록</span></button>
+      <button data-act="wavedash"><i>05</i><span>WAVEDASH에서 플레이</span></button>
     </nav>
   </div>
 
   <section id="howPanel" class="mpanel">
     <h2>조작 방법</h2>
     <div class="mrows">
-      <div class="crow"><span class="caps"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span><b>이동</b></div>
-      <div class="crow"><span class="caps"><kbd class="wide">마우스</kbd></span><b>조준</b></div>
-      <div class="crow"><span class="caps"><kbd class="wide">클릭</kbd></span><b>사격</b><em>누르고 있으면 연사</em></div>
-      <div class="crow"><span class="caps"><kbd>R</kbd></span><b>재장전</b></div>
-      <div class="crow"><span class="caps"><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd><kbd>4</kbd></span><b>무기 교체</b><em>마우스 휠로도 전환</em></div>
-      <div class="crow"><span class="caps"><kbd>G</kbd></span><b>수류탄</b><em>주변 적에게 범위 피해</em></div>
-      <div class="crow"><span class="caps"><kbd class="wide">ESC</kbd></span><b>일시정지</b></div>
-      <div class="crow"><span class="caps"><kbd>M</kbd></span><b>음소거</b></div>
+      <div class="crow kbrow"><span class="caps"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span><b>이동</b></div>
+      <div class="crow kbrow"><span class="caps"><kbd class="wide">마우스</kbd></span><b>조준</b></div>
+      <div class="crow kbrow"><span class="caps"><kbd class="wide">클릭</kbd></span><b>사격</b><em>누르고 있으면 연사</em></div>
+      <div class="crow kbrow"><span class="caps"><kbd>R</kbd></span><b>재장전</b></div>
+      <div class="crow kbrow"><span class="caps"><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd><kbd>4</kbd></span><b>무기 교체</b><em>마우스 휠로도 전환</em></div>
+      <div class="crow kbrow"><span class="caps"><kbd>G</kbd></span><b>수류탄</b><em>주변 적에게 범위 피해</em></div>
+      <div class="crow kbrow"><span class="caps"><kbd class="wide">ESC</kbd></span><b>일시정지</b></div>
+      <div class="crow kbrow"><span class="caps"><kbd>M</kbd></span><b>음소거</b></div>
+      <div class="crow touchrow"><span class="caps"><kbd class="wide">왼쪽</kbd></span><b>이동</b><em>가상 조이스틱</em></div>
+      <div class="crow touchrow"><span class="caps"><kbd class="wide">오른쪽</kbd></span><b>조준 · 사격</b><em>드래그로 조준, 누르고 있으면 연사</em></div>
+      <div class="crow touchrow"><span class="caps"><kbd class="wide">재장전</kbd></span><b>재장전</b></div>
+      <div class="crow touchrow"><span class="caps"><kbd class="wide">수류탄</kbd></span><b>수류탄</b><em>주변 적에게 범위 피해</em></div>
+      <div class="crow touchrow"><span class="caps"><kbd class="wide">무기</kbd></span><b>무기 전환</b><em>해금된 무기를 순서대로</em></div>
+      <div class="crow touchrow"><span class="caps"><kbd class="wide">Ⅱ</kbd></span><b>일시정지</b></div>
     </div>
   </section>
 
@@ -368,6 +484,13 @@
       <div class="srow" data-key="music"><b>음악 음량</b><span class="meter"></span><em></em></div>
       <div class="srow" data-key="shake"><b>화면 흔들림</b><span class="toggle"></span><em></em></div>
     </div>
+  </section>
+
+  <section id="recordsPanel" class="mpanel">
+    <h2>기록</h2>
+    <div class="recsum" id="recSummary"></div>
+    <div class="recsub">상위 5회</div>
+    <ol id="recList"></ol>
   </section>
 
   <div id="menuFoot">
@@ -390,6 +513,8 @@
 <div id="death" class="overlay hidden">
   <div id="deathTitle" class="distressed">사망했습니다</div>
   <div id="deathStat"></div>
+  <div id="deathRecord" class="hidden">새 최고 기록</div>
+  <div id="deathRecordSub" class="hidden"></div>
   <div id="deathBest"></div>
   <div id="deathMenu" class="vmenu">
     <button id="retryBtn">다시 도전</button>
@@ -414,8 +539,13 @@ const Wavedash = window.Wavedash ?? null;
 // ===================================================================
 
 const canvas = document.getElementById('game');
+// touch devices (coarse pointer / touch-only) get on-screen controls; DEBUG: ?touch=1 shows them anywhere
+const DEBUG_TOUCH = new URLSearchParams(location.search).get('touch') === '1';
+const IS_TOUCH = DEBUG_TOUCH || matchMedia('(pointer: coarse)').matches ||
+  ('ontouchstart' in window && !matchMedia('(hover: hover) and (pointer: fine)').matches);
+if (IS_TOUCH) document.body.classList.add('touch');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, IS_TOUCH ? 1.5 : 2));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
@@ -548,6 +678,34 @@ const store = {
   set(k, v) { try { localStorage.setItem('aah-' + k, JSON.stringify(v)); } catch { /* not persisted */ } },
 };
 const settings = Object.assign({ master: 8, music: 8, shake: true }, store.get('settings', {})); // volumes are 0..10
+
+// --- 기록: best wave / best kills / totals / top-5 runs, saved under localStorage 'aah-records' ---
+const records = {
+  load() {
+    const raw = store.get('records', null), r = { bestWave: 0, bestKills: 0, totalKills: 0, totalRuns: 0, runs: [] };
+    const n = v => Math.max(0, Math.floor(Number(v)) || 0);
+    if (raw && typeof raw === 'object') {
+      r.bestWave = n(raw.bestWave); r.bestKills = n(raw.bestKills); r.totalKills = n(raw.totalKills); r.totalRuns = n(raw.totalRuns);
+      if (Array.isArray(raw.runs)) r.runs = raw.runs.filter(x => x && typeof x === 'object').slice(0, 5).map(x => ({ wave: n(x.wave), kills: n(x.kills), date: n(x.date) }));
+    }
+    const legacy = store.get('best', null); // the older single "best night" entry still counts
+    if (legacy && typeof legacy === 'object') { r.bestWave = Math.max(r.bestWave, n(legacy.wave)); r.bestKills = Math.max(r.bestKills, n(legacy.kills)); }
+    return r;
+  },
+  // log a finished run; says what it beat
+  add(wave, kills) {
+    const r = this.load();
+    const newKills = kills > r.bestKills, newWave = wave > r.bestWave;
+    const prev = { bestWave: r.bestWave, bestKills: r.bestKills };
+    r.bestWave = Math.max(r.bestWave, wave); r.bestKills = Math.max(r.bestKills, kills);
+    r.totalKills += kills; r.totalRuns++;
+    r.runs.push({ wave, kills, date: Date.now() });
+    r.runs.sort((a, b) => b.kills - a.kills || b.wave - a.wave || b.date - a.date);
+    r.runs.length = Math.min(5, r.runs.length);
+    store.set('records', r);
+    return { newKills, newWave, record: kills > 0 && (newKills || newWave), prev };
+  },
+};
 
 const audio = {
   ctx: null, muted: false, waves: {}, bufs: {}, lastHit: 0, lastHover: 0, stepAlt: false,
@@ -2086,9 +2244,9 @@ function stormFor(wave) {
 }
 const NIGHT = new THREE.Color(0x05060a), BOLT_SKY = new THREE.Color(0x3a4458);
 const weather = {
-  level: 0, target: 0, t: 0, drop: 0, gust: 1,
+  level: 0, target: 0, dark: 0, darkTarget: 0, t: 0, drop: 0, gust: 1,
   flashT: -1, flash: 0, nextBolt: 8, thunderIn: -1, thunderNear: 0, splashI: 0, splashDue: 0, soundT: 0,
-  set(level) { this.level = this.target = level; this.flashT = -1; this.thunderIn = -1; this.nextBolt = 8; },
+  set(level) { this.level = this.target = level; this.dark = this.darkTarget = 0; this.flashT = -1; this.thunderIn = -1; this.nextBolt = 8; },
 };
 
 // rain: streaks falling through a box that follows the survivor, placed by the GPU
@@ -2188,12 +2346,14 @@ function updateWeather(dt) {
     if (t > 1.2) { w.flashT = -1; w.flash = 0; }
   }
   // --- the world gets wet, dark and close ---
-  scene.fog.near = 32 - 14 * L;
-  scene.fog.far = 62 - 18 * L;
+  // 어둠 속에서 waves: thicker, darker fog and dimmer light (eased in and out)
+  const D = (w.dark += Math.max(-dt * 0.5, Math.min(dt * 0.5, w.darkTarget - w.dark)));
+  scene.fog.near = 32 - 14 * L - 10 * D;
+  scene.fog.far = 62 - 18 * L - 14 * D;
   scene.fog.color.copy(NIGHT).lerp(BOLT_SKY, w.flash * 0.7);
   scene.background.copy(scene.fog.color);
-  moon.intensity = 2.8 - 1.1 * L + w.flash * 14;
-  ambient.intensity = 3.0 - 0.7 * L + w.flash * 3;
+  moon.intensity = (2.8 - 1.1 * L) * (1 - 0.35 * D) + w.flash * 14;
+  ambient.intensity = (3.0 - 0.7 * L) * (1 - 0.4 * D) + w.flash * 3;
   worldMat.roughness = 0.92 - 0.35 * L;
   ground.material.roughness = 1 - 0.4 * L;
   // and the wind in the mix (a few times a second is plenty)
@@ -2892,6 +3052,96 @@ window.addEventListener('mousedown', () => { firing = true; });
 window.addEventListener('mouseup', () => { firing = false; });
 window.addEventListener('contextmenu', e => e.preventDefault());
 
+// ---------- touch controls: left stick moves, right area aims (drag) and fires (hold) ----------
+const touch = { on: IS_TOUCH, mx: 0, mz: 0, mag: 0, aimX: 0, aimZ: 1, hasAim: false, sticks: [], live: false };
+if (IS_TOUCH) {
+  const $ = id => document.getElementById(id);
+  // a floating stick: appears under the finger, reports a vector (length 0..1) while dragged
+  const makeStick = (zoneId, baseId, knobId, homeFn, onStart, onMove, onEnd) => {
+    const zone = $(zoneId), base = $(baseId), knob = $(knobId), R = 52;
+    let id = null, ox = 0, oy = 0;
+    const place = (el, x, y) => { el.style.left = x + 'px'; el.style.top = y + 'px'; };
+    const home = () => { const r = zone.getBoundingClientRect(), [x, y] = homeFn(r); place(base, x, y); place(knob, x, y); };
+    const end = () => {
+      if (id !== null) { try { zone.releasePointerCapture(id); } catch {} }
+      id = null; zone.classList.remove('on'); home(); onEnd();
+    };
+    zone.addEventListener('pointerdown', e => {
+      if (id !== null) return;
+      e.preventDefault();
+      id = e.pointerId;
+      try { zone.setPointerCapture(id); } catch {}
+      const r = zone.getBoundingClientRect();
+      ox = e.clientX - r.left; oy = e.clientY - r.top;
+      place(base, ox, oy); place(knob, ox, oy);
+      zone.classList.add('on');
+      onStart();
+    });
+    zone.addEventListener('pointermove', e => {
+      if (e.pointerId !== id) return;
+      e.preventDefault();
+      const r = zone.getBoundingClientRect();
+      let dx = e.clientX - r.left - ox, dy = e.clientY - r.top - oy;
+      const d = Math.hypot(dx, dy);
+      if (d > R) { dx *= R / d; dy *= R / d; }
+      place(knob, ox + dx, oy + dy);
+      onMove(dx / R, dy / R);
+    });
+    for (const ev of ['pointerup', 'pointercancel', 'lostpointercapture']) {
+      zone.addEventListener(ev, e => { if (e.pointerId === id) end(); });
+    }
+    addEventListener('resize', () => { if (id === null) home(); });
+    home();
+    touch.sticks.push({ end, home });
+  };
+  makeStick('tJoy', 'tJoyBase', 'tJoyKnob', r => [Math.min(100, r.width * 0.4), r.height - 100],
+    () => {},
+    (nx, ny) => {
+      const m = Math.hypot(nx, ny);
+      if (m < 0.12) { touch.mag = 0; return; }
+      touch.mx = nx / m; touch.mz = ny / m; touch.mag = Math.min(1, (m - 0.12) / 0.78);
+    },
+    () => { touch.mag = 0; });
+  makeStick('tAim', 'tAimBase', 'tAimKnob', r => [r.width * 0.45, r.height - 100],
+    () => {
+      if (!touch.hasAim) { touch.aimX = Math.sin(player.rotation.y); touch.aimZ = Math.cos(player.rotation.y); touch.hasAim = true; }
+      firing = true;
+    },
+    (nx, ny) => {
+      const m = Math.hypot(nx, ny);
+      if (m > 0.2) { touch.aimX = nx / m; touch.aimZ = ny / m; }
+    },
+    () => { firing = false; });
+  const tap = (id, fn) => document.getElementById(id).addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); fn(); });
+  tap('tReload', () => startReload());
+  tap('tNade', () => throwGrenade());
+  tap('tPause', () => setPaused(true));
+  tap('tWeapon', () => { // cycle through the unlocked weapons
+    if (!state.running || state.paused || state.choosing) return;
+    for (let k = 1; k < WEAPONS.length; k++) {
+      const i = (state.weapon + k) % WEAPONS.length;
+      if (state.unlocked[i]) { switchWeapon(i); break; }
+    }
+  });
+  // a real mouse takes the aim back
+  window.addEventListener('mousemove', e => { if (e.movementX || e.movementY) touch.hasAim = false; });
+  // no scrolling, rubber-banding or pinch-zoom (menu panels may still scroll)
+  document.addEventListener('touchmove', e => { if (!e.target.closest('.mpanel')) e.preventDefault(); }, { passive: false });
+  for (const ev of ['gesturestart', 'gesturechange']) document.addEventListener(ev, e => e.preventDefault());
+  document.getElementById('pressAny').textContent = '화면을 터치하세요';
+}
+// called every frame: show the controls during a live run, release them whenever play stops
+touch.sync = function () {
+  if (!this.on) return;
+  const live = state.running;
+  if (live !== this.live) { this.live = live; document.body.classList.toggle('playing', live); if (live) this.sticks.forEach(s => s.home()); else this.reset(); }
+  if (live) document.getElementById('tNade').hidden = state.grenades <= 0;
+};
+touch.reset = function () {
+  this.mag = 0;
+  for (const s of this.sticks) s.end();
+};
+
 // the death screen: go again, or back to the title
 document.getElementById('retryBtn').addEventListener('click', () => startGame());
 document.getElementById('deathQuitBtn').addEventListener('click', quitToTitle);
@@ -2913,6 +3163,7 @@ document.getElementById('cards').addEventListener('mouseover', e => {
 // ===================================================================
 const hud = {
   wave: document.getElementById('waveNum'),
+  theme: document.getElementById('waveTheme'),
   kills: document.getElementById('kills'),
   zleft: document.getElementById('zleft'),
   bossBar: document.getElementById('bossBar'),
@@ -2962,7 +3213,7 @@ function updateHUD() {
     : `<span class="ws lock">${i + 1} ${w.name}<small>웨이브 ${w.unlock}</small></span>`).join('');
   if (bar !== hud.weaponBar._s) hud.weaponBar.innerHTML = hud.weaponBar._s = bar;
   hud.weaponNow.textContent = `${W.name}  ${state.mag} / ${cap}`;
-  hud.grenades.textContent = state.grenades > 0 ? `수류탄 ×${state.grenades}  [G]` : '';
+  hud.grenades.textContent = state.grenades > 0 ? `수류탄 ×${state.grenades}${IS_TOUCH ? '' : '  [G]'}` : '';
   hud.reloadBar.classList.toggle('active', state.reloading);
   if (state.reloading) hud.reloadFill.style.width = (state.reloadT / state.reloadLen * 100) + '%';
 }
@@ -3244,7 +3495,7 @@ const ENEMY_TYPES = {
 const bossHp = n => 22 + n * 3;
 function enemyHp(type) {
   const c = ENEMY_TYPES[type];
-  return type === 'boss' ? bossHp(state.wave) : Math.max(c.hpMin, state.zombieHp * c.hp);
+  return type === 'boss' ? bossHp(state.wave) : Math.max(c.hpMin, state.zombieHp * c.hp) * (state.hpMul || 1);
 }
 // materials for the blocky fallback bodies (the zombie keeps its own vertex-colored pair)
 const typeSkins = { zombie: { skin: zombieSkin, hurt: zombieHurt } };
@@ -4229,12 +4480,49 @@ const DEBUG_WEAPONS = new URLSearchParams(location.search).get('weapons') === 'a
 // What a wave is made of. Waves 1-2: zombies only. Skeletons from wave 3 (a growing share), small
 // monsters from wave 4 (they come in packs of 3-4 and count half a zombie each against the budget),
 // and a boss on every 5th wave, which has fewer ordinary enemies. Returns the spawn order.
-function planWave(n, existing) {
-  const total = Math.max(0, 5 + n * 3 - existing);
+// Wave themes shift the mix (and sometimes the mood) while the overall budget stays on the usual curve:
+//   좀비 떼 mostly zombies · 해골 습격 mostly fast skeletons · 괴물 무리 a swarm of small monsters ·
+//   어둠 속에서 darker fog, a third fewer but tougher enemies · 보스전 every 5th wave. 'plain' is the usual mix.
+const THEMES = {
+  plain:    { name: '',           desc: '',                       min: 2 },
+  horde:    { name: '좀비 떼',    desc: '시체가 끝없이 밀려온다', min: 3 },
+  skeleton: { name: '해골 습격',  desc: '뼈 부딪히는 소리가 다가온다', min: 3 },
+  swarm:    { name: '괴물 무리',  desc: '작은 것들이 몰려온다',   min: 4 },
+  dark:     { name: '어둠 속에서', desc: '아무것도 보이지 않는다', min: 3 },
+  boss:     { name: '보스전',     desc: '보스 출현',              min: 5 },
+};
+const DARK_HP = 1.45, DARK_COUNT = 0.65;
+// DEBUG (documented in the README): ?seed=N fixes the theme sequence (otherwise every run is seeded differently)
+const DEBUG_SEED = parseInt(new URLSearchParams(location.search).get('seed'), 10);
+const run = { seed: 1, prev: null }; // per-run seed for the theme picks, and the previous wave's theme
+function hash32(x) {
+  x = Math.imul(x ^ (x >>> 16), 0x45d9f3b); x = Math.imul(x ^ (x >>> 16), 0x45d9f3b);
+  return (x ^ (x >>> 16)) >>> 0;
+}
+function newRunSeed() {
+  run.seed = Number.isFinite(DEBUG_SEED) ? DEBUG_SEED >>> 0 : (Math.random() * 4294967296) >>> 0;
+  run.prev = null;
+}
+// theme key for wave n: boss every 5th wave, wave 1 plain, otherwise a seeded pick that never repeats back-to-back
+function pickTheme(n) {
+  if (n >= 5 && n % 5 === 0) return 'boss';
+  if (n < 2) return 'plain';
+  const pool = Object.keys(THEMES).filter(k => k !== 'boss' && THEMES[k].min <= n && k !== run.prev);
+  return pool.length ? pool[hash32(run.seed + Math.imul(n, 0x9e3779b1)) % pool.length] : 'plain';
+}
+
+function planWave(n, existing, theme = 'plain') {
+  const dark = theme === 'dark';
+  const total = Math.max(0, Math.round((5 + n * 3) * (dark ? DARK_COUNT : 1)) - existing);
   const bosses = n >= 5 && n % 5 === 0 ? (n >= 20 ? 2 : 1) : 0;
   const normal = bosses ? Math.max(3, Math.round(total * 0.55)) : total;
-  const nSk = n >= 3 ? Math.round(normal * Math.min(0.4, 0.15 + (n - 3) * 0.05)) : 0;
-  const nImp = n >= 4 ? Math.round(normal * Math.min(0.35, 0.15 + (n - 4) * 0.04) * 1.5) : 0;
+  let skK = Math.min(0.4, 0.15 + (n - 3) * 0.05);
+  let impK = Math.min(0.35, 0.15 + (n - 4) * 0.04) * 1.5;
+  if (theme === 'horde') { skK *= 0.3; impK *= 0.3; }
+  else if (theme === 'skeleton') { skK = 0.7; impK = 0; }
+  else if (theme === 'swarm') { skK *= 0.4; impK = 0.8; }
+  const nSk = n >= 3 ? Math.round(normal * skK) : 0;
+  const nImp = n >= 4 ? Math.min(36, Math.round(normal * impK)) : 0;
   const nZ = Math.max(1, normal - nSk - Math.ceil(nImp / 2));
   const order = [...Array(nZ).fill('zombie'), ...Array(nSk).fill('skeleton')];
   for (let i = order.length - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0; [order[i], order[j]] = [order[j], order[i]]; }
@@ -4265,6 +4553,12 @@ function spawnNext() {
 
 function startWave(n) {
   state.wave = n;
+  const theme = pickTheme(n), th = THEMES[theme];
+  run.prev = theme;
+  state.theme = theme;
+  state.hpMul = theme === 'dark' ? DARK_HP : 1;
+  weather.darkTarget = theme === 'dark' ? 1 : 0;
+  hud.theme.textContent = th.name ? ' · ' + th.name : '';
   // weapons unlock with the waves: 샷건 3, 소총 6, 저격총 9
   const fresh = WEAPONS.map((w, i) => i).filter(i => !state.unlocked[i] && n >= WEAPONS[i].unlock);
   if (fresh.length) {
@@ -4282,14 +4576,14 @@ function startWave(n) {
   state.zombieSpeed = Math.min(5.2, 2.3 + n * 0.18);
   state.zombieHp = 2 + (n - 1) * 0.4;
   // anything already up counts toward the wave (the yard's shamblers when you leave the title)
-  state.queue = planWave(n, zombies.length);
+  state.queue = planWave(n, zombies.length, theme);
   state.toSpawn = state.queue.length;
   for (const z of zombies) { const u = z.userData; u.speed = state.zombieSpeed * u.pace * u.spd; u.hp = u.maxHp = enemyHp(u.type); }
   state.spawnTimer = 0;
   state.intermission = 0;
   weather.target = stormFor(n);
   const omens = { 1: '이미 여기 있다', 5: '비가 내리기 시작한다', 8: '비가 거세진다', 12: '폭풍이 몰아친다', 15: '신이시여, 도우소서' };
-  showBanner('웨이브 ' + n, n >= 5 && n % 5 === 0 ? '보스 출현' : omens[n] || '점점 더 심해진다');
+  showBanner('웨이브 ' + n, th.name ? `${th.name} · ${theme === 'boss' ? th.desc : omens[n] || th.desc}` : omens[n] || '점점 더 심해진다', 2.2);
   audio.waveStart(n);
 }
 
@@ -4319,13 +4613,14 @@ const BASE_STATS = { maxHp: 3, magSize: 8, reloadTime: 1.2, fireRate: 0.13, dama
 function resetGame(keep = false) {
   if (!keep) { clearRun(); resetOpenings(); }
   weather.set(0);
+  newRunSeed();
   Object.assign(state, {
     ...BASE_STATS, running: true, hp: BASE_STATS.maxHp, kills: 0, shots: 0, wave: 0,
     mag: BASE_STATS.magSize, reloading: false, reloadT: 0,
     fireCd: 0, dmgCd: 0, toSpawn: 0, queue: [], chip: 0, spawnTimer: 0,
     intermission: 0, choosing: false, shake: 0, upgrades: {},
     pDamage: 0, pAmmo: 0, sinceDrop: 0,
-    reloadLen: BASE_STATS.reloadTime, weapon: 0, nadeCd: 0,
+    reloadLen: BASE_STATS.reloadTime, weapon: 0, nadeCd: 0, hpMul: 1, theme: 'plain',
     unlocked: WEAPONS.map((w, i) => i === 0 || DEBUG_WEAPONS), ammo: WEAPONS.map(w => w.mag),
     grenades: DEBUG_WEAPONS ? 3 : 0,
   });
@@ -4356,6 +4651,7 @@ function setPaused(on) {
   state.paused = on;
   firing = false;
   for (const k in keys) keys[k] = false; // keyups are missed while the menu is up
+  if (on) touch.reset();
   document.getElementById('pauseStat').textContent = `웨이브 ${state.wave} · ${state.kills} 처치`;
   document.getElementById('pause').classList.toggle('hidden', !on);
   audio.pause(on);
@@ -4363,6 +4659,11 @@ function setPaused(on) {
 
 function quitToTitle() {
   setPaused(false);
+  if (state.running && state.wave > 0 && !DEBUG_WAVE) { // an abandoned run still counts
+    const b = store.get('best', null);
+    records.add(state.wave, state.kills);
+    if (state.kills > 0 && (!b || state.kills > b.kills)) store.set('best', { wave: state.wave, kills: state.kills });
+  }
   state.running = false;
   document.getElementById('death').classList.add('hidden');
   enterTitle(false);
@@ -4370,16 +4671,24 @@ function quitToTitle() {
 }
 
 function die() {
+  if (!state.running) return;
   state.running = false;
   firing = false;
   document.getElementById('deathStat').textContent =
     `웨이브 ${state.wave}까지 도달 · ${state.kills} 처치`;
   // best night is ranked by kills, like the leaderboard
   const best = store.get('best', null), record = state.kills > 0 && (!best || state.kills > best.kills);
+  const rec = DEBUG_WAVE ? null : records.add(state.wave, state.kills); // before 'best' is overwritten (records also reads it)
   if (record && !DEBUG_WAVE) store.set('best', { wave: state.wave, kills: state.kills });
   const db = document.getElementById('deathBest');
-  db.textContent = record ? '최고 기록 갱신' : best ? `최고: 웨이브 ${best.wave} · ${best.kills} 처치` : '';
-  db.classList.toggle('record', record);
+  db.textContent = rec?.record ? (rec.prev.bestKills ? `이전 최고: 웨이브 ${rec.prev.bestWave} · ${rec.prev.bestKills} 처치` : '')
+    : record ? '최고 기록 갱신' : best ? `최고: 웨이브 ${best.wave} · ${best.kills} 처치` : '';
+  db.classList.toggle('record', record && !rec?.record);
+  // "새 최고 기록" banner when this run beat the best wave or the best kill count
+  const dr = document.getElementById('deathRecord'), drs = document.getElementById('deathRecordSub');
+  dr.classList.toggle('hidden', !rec?.record);
+  drs.classList.toggle('hidden', !rec?.record);
+  if (rec?.record) drs.textContent = [rec.newWave && `최고 웨이브 ${state.wave}`, rec.newKills && `최고 처치 ${state.kills}`].filter(Boolean).join('  ·  ');
   document.getElementById('death').classList.remove('hidden');
   audio.death();
   if (state.wave === 1 && state.shots === 0) wvUnlock("PACIFIST");
@@ -4525,6 +4834,8 @@ const menu = {
     this.panel = panel;
     document.getElementById('howPanel').classList.toggle('open', panel === 'how');
     document.getElementById('settingsPanel').classList.toggle('open', panel === 'settings');
+    document.getElementById('recordsPanel').classList.toggle('open', panel === 'records');
+    if (panel === 'records') drawRecords();
     if (panel === 'settings') this.selectRow(this.row, true);
     this.hints();
   },
@@ -4601,6 +4912,22 @@ const menu = {
   },
 };
 menu.drawSettings();
+const fmtDate = ms => { const d = new Date(ms); return ms ? `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}` : ''; };
+function drawRecords() {
+  const r = records.load();
+  document.getElementById('recSummary').innerHTML = [['최고 웨이브', r.bestWave], ['최고 처치', r.bestKills], ['누적 처치', r.totalKills], ['플레이 횟수', r.totalRuns]]
+    .map(([l, v]) => `<div>${l}<b>${v}</b></div>`).join('');
+  document.getElementById('recList').innerHTML = r.runs.length
+    ? r.runs.map((x, i) => `<li><i>${i + 1}</i><span>웨이브 ${x.wave}</span><span>${x.kills} 처치</span><em>${fmtDate(x.date)}</em></li>`).join('')
+    : '<li class="none">아직 기록이 없습니다</li>';
+}
+// panels get a close button (shown on touch / small screens, where there is no ESC)
+document.querySelectorAll('.mpanel').forEach(p => {
+  const b = document.createElement('button');
+  b.className = 'mclose'; b.type = 'button'; b.textContent = '닫기';
+  b.addEventListener('click', e => { e.stopPropagation(); audio.ui('back'); menu.open(null); });
+  p.appendChild(b);
+});
 function showBest() {
   const b = store.get('best', null);
   document.getElementById('bestRun').innerHTML = b
@@ -4787,6 +5114,7 @@ function separateZombies() {
 
 function update(dt) {
   const px = player.position.x, pz = player.position.z;
+  touch.sync();
   if (state.running) {
     // --- movement ---
     let mx = 0, mz = 0;
@@ -4794,11 +5122,13 @@ function update(dt) {
     if (keys['KeyS'] || keys['ArrowDown']) mz += 1;
     if (keys['KeyA'] || keys['ArrowLeft']) mx -= 1;
     if (keys['KeyD'] || keys['ArrowRight']) mx += 1;
+    let amt = 1; // touch stick: analog speed
+    if (!mx && !mz && touch.mag > 0) { mx = touch.mx; mz = touch.mz; amt = touch.mag; }
     const moving = !!(mx || mz);
     if (moving) {
       const l = Math.hypot(mx, mz);
-      player.position.x += (mx / l) * state.speed * dt;
-      player.position.z += (mz / l) * state.speed * dt;
+      player.position.x += (mx / l) * state.speed * amt * dt;
+      player.position.z += (mz / l) * state.speed * amt * dt;
     }
     // clamp inside cabin
     const lim = HALF - 0.7;
@@ -4806,7 +5136,10 @@ function update(dt) {
     player.position.z = Math.max(-lim, Math.min(lim, player.position.z));
     // --- aim ---
     raycaster.setFromCamera(mouse, camera);
-    if (raycaster.ray.intersectPlane(aimPlane, aimPoint)) {
+    if (touch.on && touch.hasAim) { // aim stick: a point ahead of the survivor in the dragged direction
+      aimPoint.set(player.position.x + touch.aimX * 10, 0.9, player.position.z + touch.aimZ * 10);
+      player.rotation.y = Math.atan2(touch.aimX, touch.aimZ);
+    } else if (raycaster.ray.intersectPlane(aimPlane, aimPoint)) {
       const a = Math.atan2(aimPoint.x - player.position.x, aimPoint.z - player.position.z);
       player.rotation.y = a;
     }
