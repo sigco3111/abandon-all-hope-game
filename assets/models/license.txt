@@ -2,3 +2,12 @@ zombie.glb: "Zombie_Male" from the Ultimate Animated Character Pack by Quaterniu
 Converted from FBX to GLB (materials simplified, per-material meshes merged, clip names shortened).
 Animation clips: Victory, SitDown, Shoot_OneHanded, PickUp, RecieveHit, Idle, Defeat, Walk, Walk_Carry, StandUp, Punch.
 Used by the game: Idle, Walk, Punch, Defeat.
+
+skeleton.glb: "Skeleton" from the Animated Monster Pack by Quaternius (https://quaternius.com / https://opengameart.org/content/lowpoly-animated-monsters), CC0 1.0.
+Converted from FBX to GLB (materials simplified, clip names shortened). Animation clips: Attack, Death, Running, Spawn, Idle. Used by the game: Idle, Running, Attack, Death. Tinted bone-white in code.
+
+small_monster.glb: "Slime" from the Animated Monster Pack by Quaternius (https://quaternius.com / https://opengameart.org/content/lowpoly-animated-monsters), CC0 1.0.
+Converted from FBX to GLB (materials simplified, clip names shortened). Animation clips: Walk, Death, Idle, Attack. Used by the game: Idle, Walk, Attack, Death. Tinted purple in code.
+
+boss_mech.glb: "Mike" from the Animated Mech Pack by Quaternius (https://quaternius.com), CC0 1.0.
+Converted from glTF to a single GLB (unlit material flag removed, textures embedded). Animation clips: Dance, Death, Hello, HitRecieve_1, HitRecieve_2, Idle, Jump, Kick, No, Pickup, Punch, Run, Run_Holding, Shoot, SwordSlash, Walk, Walk_Holding, Yes. Used by the game: Idle, Walk, Punch, Death.
