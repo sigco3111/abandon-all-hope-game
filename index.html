@@ -187,8 +187,8 @@
     width: min(560px, 46vw);
   }
   #title { font-family: "Anton", "Black Han Sans", sans-serif; line-height: .86; filter: drop-shadow(0 4px 0 #000) drop-shadow(0 0 30px #d6453c40); }
-  #titleTop { font-size: clamp(26px, 3.3vw, 50px); letter-spacing: .5em; color: #e9e2d6; }
-  #titleMain { font-size: clamp(64px, 8.6vw, 128px); letter-spacing: 4px; color: #d6453c; margin-left: -3px; }
+  #titleTop { font-size: clamp(26px, min(3.3vw, 6vh), 50px); letter-spacing: .5em; color: #e9e2d6; }
+  #titleMain { font-size: clamp(64px, min(8.6vw, 15vh), 128px); letter-spacing: 4px; color: #d6453c; margin-left: -3px; }
 
   #pressAny {
     margin-top: 64px; font-size: 22px; letter-spacing: 8px; color: #cdd2d8;
@@ -198,10 +198,10 @@
   #menu:not(.splash) #pressAny { display: none; }
   #menu.splash #menuList, #menu.splash #menuFoot { display: none; }
 
-  #menuList { position: relative; margin-top: 52px; display: flex; flex-direction: column; }
+  #menuList { position: relative; margin-top: 30px; display: flex; flex-direction: column; }
   #menuList button {
     font: inherit; background: none; border: 0; cursor: pointer; text-align: left;
-    display: flex; align-items: baseline; gap: 18px; padding: 7px 0 7px 26px;
+    display: flex; align-items: baseline; gap: 18px; padding: 4px 0 4px 26px;
     color: #6c727b; transition: color .16s, transform .22s cubic-bezier(.2, .8, .2, 1);
     animation: itemIn .55s cubic-bezier(.2, .8, .2, 1) backwards;
   }
@@ -209,9 +209,12 @@
   #menuList button:nth-of-type(3) { animation-delay: .14s; }
   #menuList button:nth-of-type(4) { animation-delay: .21s; }
   #menuList button:nth-of-type(5) { animation-delay: .28s; }
+  #menuList button:nth-of-type(6) { animation-delay: .35s; }
+  #menuList button:nth-of-type(7) { animation-delay: .42s; }
+  #menuList button:nth-of-type(8) { animation-delay: .49s; }
   @keyframes itemIn { from { opacity: 0; transform: translateX(-28px); } }
   #menuList button i { font-style: normal; font-size: 17px; letter-spacing: 2px; color: #444a53; transition: color .16s; }
-  #menuList button span { font-family: "Anton", "Black Han Sans", sans-serif; font-size: clamp(30px, 2.6vw, 40px); letter-spacing: 3px; line-height: 1.1; }
+  #menuList button span { font-family: "Anton", "Black Han Sans", sans-serif; font-size: clamp(22px, min(2.6vw, 4.4vh), 40px); letter-spacing: 3px; line-height: 1.1; }
   #menuList button.sel { color: #ece6db; transform: translateX(12px); }
   #menuList button.sel i { color: #d6453c; }
   #menuList button.sel span { text-shadow: 0 0 22px #d6453c55, 0 2px 0 #000; }
@@ -304,6 +307,61 @@
   .vmenu button:hover::after { content: "‹"; }
   #deathTitle { font-family: "Anton", "Black Han Sans", sans-serif; font-size: clamp(72px, 12vw, 170px); letter-spacing: 10px; color: #b8332b; filter: drop-shadow(0 4px 0 #000) drop-shadow(0 0 28px #b8332b55); }
   #deathStat { color: #d6453c; font-size: 22px; letter-spacing: 4px; margin-top: 22px; }
+
+  /* ---------- 다회차: 회차 표시, 영혼 조각, 강화 · 저주 · 업적 패널, 승리 화면 ---------- */
+  #loopTag { color: #e8d28a; letter-spacing: 3px; }
+  #curseTag { color: #b070d8; margin-left: 10px; font-size: 12px; }
+  #titleLoop { margin-top: 14px; font-size: 20px; letter-spacing: 6px; color: #e8d28a; text-shadow: 0 0 14px #e8d28a44, 0 2px 0 #000; }
+  #titleLoop small { color: #9ad0ff; font-size: 15px; letter-spacing: 3px; margin-left: 14px; }
+  #menu.splash #titleLoop { display: none; }
+  .mpanel.tall { max-height: 88vh; overflow-y: auto; overflow-x: hidden; scrollbar-width: thin; scrollbar-color: #3a3d45 transparent; }
+  .mhead { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+  .souls { color: #9ad0ff; font-size: 17px; letter-spacing: 2px; white-space: nowrap; }
+  .souls b { font-weight: normal; color: #cfe8ff; font-size: 26px; margin-left: 6px; }
+  .shrow {
+    display: grid; grid-template-columns: 1fr auto 64px; gap: 12px; align-items: center;
+    padding: 4px 12px; margin: 0 -12px; border-left: 3px solid transparent; border-bottom: 1px solid #1f1f24;
+    cursor: pointer; color: #8a9098; transition: background .15s, border-color .15s;
+  }
+  .shrow b { display: block; font-weight: normal; font-size: 19px; letter-spacing: 2px; color: #cdd2d8; }
+  .shrow small { display: block; margin-top: 1px; font-size: 14px; letter-spacing: 1px; color: #5d6470; line-height: 1.25; }
+  .shrow.sel { background: linear-gradient(90deg, #d6453c22, transparent); border-left-color: #d6453c; }
+  .shrow .cost { font-style: normal; text-align: right; font-size: 19px; letter-spacing: 1px; color: #9ad0ff; }
+  .shrow.no .cost { color: #5d6470; }
+  .shrow.max .cost { color: #8fae6b; font-size: 15px; }
+  .shrow.lock { opacity: .45; }
+  .shrow.on b { color: #e8d28a; }
+  .shrow.done b { color: #e8d28a; }
+  .shrow.undone b { color: #6c727b; }
+  .pips { display: flex; gap: 3px; }
+  .pips i { width: 9px; height: 14px; background: #24262c; }
+  .pips i.on { background: #9ad0ff; box-shadow: 0 0 6px #9ad0ff66; }
+  .mbtn { font: inherit; font-size: 16px; letter-spacing: 3px; color: #8a9098; background: none; border: 1px solid #2c2f37; padding: 4px 14px; cursor: pointer; }
+  .mbtn:hover { color: #e9e2d6; border-color: #d6453c; }
+  .mbtn.danger { color: #d6453c; border-color: #6a2a2a; }
+  .loopsel { display: flex; align-items: center; gap: 10px; color: #e8d28a; font-size: 19px; letter-spacing: 2px; white-space: nowrap; }
+  .loopsel .mbtn { padding: 1px 10px; }
+  .mnote { margin-top: 12px; font-size: 15px; letter-spacing: 2px; color: #8a9098; line-height: 1.7; }
+  .mnote b { font-weight: normal; color: #e8d28a; }
+  .shrow.reset { grid-template-columns: 1fr auto; }
+  .shrow.reset span { display: flex; gap: 8px; align-items: center; }
+  #achToast {
+    position: fixed; top: 84px; right: 16px; z-index: 40; min-width: 220px; max-width: 80vw; padding: 10px 16px 10px 18px;
+    background: linear-gradient(180deg, #1c1810f2, #0b0a0cf2); border: 1px solid #5a4a22; border-left: 4px solid #e8d28a;
+    box-shadow: 0 8px 26px #000b, 0 0 18px #e8d28a33; pointer-events: none;
+    opacity: 0; transform: translateX(40px); transition: opacity .3s, transform .35s cubic-bezier(.2, .8, .2, 1);
+  }
+  #achToast.on { opacity: 1; transform: none; }
+  #achToast small { display: block; font-size: 12px; letter-spacing: 4px; color: #b8a76a; }
+  #achToast b { display: block; font-weight: normal; font-size: 22px; letter-spacing: 2px; color: #f3e6b0; }
+  #achToast span { display: block; font-size: 13px; letter-spacing: 1px; color: #8a9098; }
+  #victoryTitle { font-family: "Anton", "Black Han Sans", sans-serif; font-size: clamp(72px, 12vw, 170px); letter-spacing: 10px; padding-left: 10px; color: #e8d28a; filter: drop-shadow(0 4px 0 #000) drop-shadow(0 0 30px #e8d28a66); }
+  #victory { background: radial-gradient(circle at center, rgba(10,8,10,.88), rgba(2,2,4,.97)); }
+  #victoryStat { color: #cdd2d8; font-size: 22px; letter-spacing: 4px; margin-top: 22px; }
+  .soulgain { margin-top: 16px; font-size: 26px; letter-spacing: 5px; color: #9ad0ff; text-shadow: 0 0 16px #9ad0ff55, 0 2px 0 #000; }
+  .soulgain small { display: block; font-size: 14px; letter-spacing: 3px; color: #5d7388; margin-top: 4px; }
+  #victoryNote { color: #b8a76a; font-size: 16px; letter-spacing: 3px; margin-top: 10px; min-height: 1.2em; }
+  #cards.n4 .card { width: 200px; }
   /* ---------- touch controls (only on touch devices, or with ?touch=1) ---------- */
   #touchUI { position: fixed; inset: 0; z-index: 3; pointer-events: none; display: none; }
   body.touch.playing #touchUI { display: block; }
@@ -379,7 +437,14 @@
     #pauseStat, #deathStat { font-size: 15px; }
     .vmenu { margin-top: 18px; }
     .vmenu button { font-size: 24px; padding: 4px 16px; }
-    #deathTitle { font-size: clamp(44px, 11vw, 90px); }
+    #deathTitle, #victoryTitle { font-size: clamp(44px, 11vw, 90px); }
+    #victoryStat { font-size: 15px; }
+    .soulgain { font-size: 20px; }
+    #cards.n4 .card { width: min(22vw, 170px); }
+    #achToast { top: 60px; right: 8px; }
+    .shrow { grid-template-columns: 1fr auto 52px; padding: 6px 12px; }
+    .shrow b { font-size: 16px; }
+    .shrow small { font-size: 12px; }
     #deathRecord { margin-top: 10px; }
     #tReload, #tNade, #tWeapon { width: 56px; height: 56px; font-size: 13px; }
     #tReload { bottom: calc(110px + env(safe-area-inset-bottom)); }
@@ -399,6 +464,7 @@
   <div id="topbar">
     <div>
       <div class="stat"><span class="label">웨이브</span> <span id="waveNum">1</span><span id="waveTheme"></span></div>
+      <div class="stat"><span id="loopTag">회차 1</span><span id="curseTag"></span></div>
       <div id="health"></div>
       <div id="powerups"></div>
       <div id="grenades"></div>
@@ -424,6 +490,7 @@
 </div>
 
 <div id="flash"></div>
+<div id="achToast"></div>
 
 <!-- touch controls: left stick moves, right area aims (drag) and fires (hold) -->
 <div id="touchUI">
@@ -446,14 +513,18 @@
   <div id="menuShade"></div>
   <div id="menuCol">
     <div id="title"><div id="titleTop" class="distressed">모든 희망을</div><div id="titleMain" class="distressed">버려라</div></div>
+    <div id="titleLoop"></div>
     <div id="pressAny">아무 키나 누르세요</div>
     <nav id="menuList">
       <div id="menuMarker"></div>
       <button data-act="play"><i>01</i><span>플레이</span></button>
-      <button data-act="how"><i>02</i><span>조작 방법</span></button>
-      <button data-act="settings"><i>03</i><span>설정</span></button>
-      <button data-act="records"><i>04</i><span>기록</span></button>
-      <button data-act="wavedash"><i>05</i><span>WAVEDASH에서 플레이</span></button>
+      <button data-act="shop"><i>02</i><span>강화</span></button>
+      <button data-act="curse"><i>03</i><span>저주</span></button>
+      <button data-act="ach"><i>04</i><span>업적</span></button>
+      <button data-act="how"><i>05</i><span>조작 방법</span></button>
+      <button data-act="settings"><i>06</i><span>설정</span></button>
+      <button data-act="records"><i>07</i><span>기록</span></button>
+      <button data-act="wavedash"><i>08</i><span>WAVEDASH에서 플레이</span></button>
     </nav>
   </div>
 
@@ -474,6 +545,9 @@
       <div class="crow touchrow"><span class="caps"><kbd class="wide">수류탄</kbd></span><b>수류탄</b><em>주변 적에게 범위 피해</em></div>
       <div class="crow touchrow"><span class="caps"><kbd class="wide">무기</kbd></span><b>무기 전환</b><em>해금된 무기를 순서대로</em></div>
       <div class="crow touchrow"><span class="caps"><kbd class="wide">Ⅱ</kbd></span><b>일시정지</b></div>
+      <div class="crow"><span class="caps"><kbd class="wide">목표</kbd></span><b>웨이브 20 최종 보스</b><em>처치하면 생존 성공 · 다음 회차</em></div>
+      <div class="crow"><span class="caps"><kbd class="wide">영혼</kbd></span><b>영혼 조각</b><em>플레이가 끝나면 획득 · 강화에 사용</em></div>
+      <div class="crow"><span class="caps"><kbd class="wide">저주</kbd></span><b>저주</b><em>더 어렵게, 영혼 조각은 더 많이</em></div>
     </div>
   </section>
 
@@ -484,6 +558,23 @@
       <div class="srow" data-key="music"><b>음악 음량</b><span class="meter"></span><em></em></div>
       <div class="srow" data-key="shake"><b>화면 흔들림</b><span class="toggle"></span><em></em></div>
     </div>
+  </section>
+
+  <section id="shopPanel" class="mpanel tall">
+    <div class="mhead"><h2>강화</h2><div class="souls">영혼 조각<b id="shopSouls">0</b></div></div>
+    <div class="mrows" id="shopRows"></div>
+    <div class="mnote">영구 강화는 다음 플레이부터 적용됩니다.</div>
+  </section>
+
+  <section id="cursePanel" class="mpanel tall">
+    <div class="mhead"><h2>저주</h2><div class="souls">영혼 조각<b id="curseSouls">0</b></div></div>
+    <div class="mrows" id="curseRows"></div>
+    <div class="mnote" id="curseNote"></div>
+  </section>
+
+  <section id="achPanel" class="mpanel tall">
+    <div class="mhead"><h2>업적</h2><div class="souls" id="achCount"></div></div>
+    <div class="mrows" id="achRows"></div>
   </section>
 
   <section id="recordsPanel" class="mpanel">
@@ -516,9 +607,21 @@
   <div id="deathRecord" class="hidden">새 최고 기록</div>
   <div id="deathRecordSub" class="hidden"></div>
   <div id="deathBest"></div>
+  <div id="deathSouls" class="soulgain"></div>
   <div id="deathMenu" class="vmenu">
     <button id="retryBtn">다시 도전</button>
     <button id="deathQuitBtn">메인 메뉴</button>
+  </div>
+</div>
+
+<div id="victory" class="overlay hidden">
+  <div id="victoryTitle" class="distressed">생존 성공</div>
+  <div id="victoryStat"></div>
+  <div id="victorySouls" class="soulgain"></div>
+  <div id="victoryNote"></div>
+  <div id="victoryMenu" class="vmenu">
+    <button id="nextLoopBtn">다음 회차로</button>
+    <button id="victoryQuitBtn">타이틀로</button>
   </div>
 </div>
 
@@ -706,6 +809,97 @@ const records = {
     return { newKills, newWave, record: kills > 0 && (newKills || newWave), prev };
   },
 };
+
+// ===================================================================
+// 다회차 — 영혼 조각 · 영구 강화 · 저주 · 업적, saved under localStorage 'aah-meta'
+// ===================================================================
+const FINAL_WAVE = 20;   // killing this wave's 최종 보스 ends the run with 생존 성공
+const MAX_LOOP = 99;
+// DEBUG (documented in the README): ?soul=N sets the 영혼 조각 you own (for testing the shop)
+const DEBUG_SOUL = parseInt(new URLSearchParams(location.search).get('soul'), 10);
+
+// 영구 강화: cost[level] is the price of the next level. now(l) describes the effect at level l.
+const SHOP = [
+  { id: 'hp',     name: '최대 체력',   desc: '레벨당 최대 체력 +1',                 max: 3, cost: [60, 120, 220],           now: l => '+' + l },
+  { id: 'ammo',   name: '시작 탄약',   desc: '레벨당 탄창 크기 +20%',               max: 3, cost: [50, 100, 170],           now: l => '+' + l * 20 + '%' },
+  { id: 'reload', name: '장전 속도',   desc: '레벨당 재장전 +8% 빠르게',            max: 5, cost: [40, 70, 110, 160, 220],  now: l => '+' + l * 8 + '%' },
+  { id: 'speed',  name: '이동 속도',   desc: '레벨당 이동 속도 +4%',                max: 5, cost: [40, 70, 110, 160, 220],  now: l => '+' + l * 4 + '%' },
+  { id: 'crit',   name: '치명타 확률', desc: '레벨당 치명타 +4% (피해 2배)',         max: 5, cost: [50, 90, 140, 200, 280],  now: l => l * 4 + '%' },
+  { id: 'drop',   name: '드랍 확률',   desc: '레벨당 보급품 드랍 +1.5%',            max: 4, cost: [50, 90, 150, 230],       now: l => '+' + l * 1.5 + '%' },
+  { id: 'nade',   name: '비상 수류탄', desc: '레벨당 시작 수류탄 +1개',             max: 2, cost: [80, 180],                now: l => l + '개' },
+  { id: 'weapon', name: '시작 무기',   desc: '1단계 샷건 · 2단계 소총을 처음부터 해금', max: 2, cost: [300, 700],            now: l => ['없음', '샷건', '샷건 · 소총'][l] },
+  { id: 'pick',   name: '선택지 확장', desc: '업그레이드 선택 카드 +1장',           max: 1, cost: [400],                    now: l => l ? '4장' : '3장' },
+];
+// 저주: optional handicaps for a bigger 영혼 조각 payout. need = 회차 clears needed to unlock.
+const CURSES = [
+  { id: 'fast',   name: '빠른 적',        desc: '적의 이동 속도 +20%',            bonus: 0.25, need: 1 },
+  { id: 'tough',  name: '체력 증가 적',   desc: '적의 체력 +50%',                 bonus: 0.30, need: 1 },
+  { id: 'scarce', name: '탄약 부족',      desc: '탄창 크기 -40%',                 bonus: 0.25, need: 2 },
+  { id: 'dark',   name: '짙은 어둠',      desc: '항상 짙은 안개와 어둠 속에서',   bonus: 0.20, need: 2 },
+  { id: 'oneHit', name: '한 방에 죽음',   desc: '체력 1 · 한 번 맞으면 끝',       bonus: 0.60, need: 3 },
+];
+// 업적 (the Wavedash ones further below are separate and untouched)
+const ACHS = [
+  { id: 'boss1',    name: '첫 보스 처치',     desc: '보스를 처음으로 쓰러뜨린다' },
+  { id: 'wave10',   name: '열 번째 밤',       desc: '웨이브 10에 도달한다' },
+  { id: 'flawless5', name: '무상 돌파',       desc: '한 번도 맞지 않고 웨이브 5를 클리어한다' },
+  { id: 'loop2',    name: '다시, 처음부터',   desc: '회차 2를 시작한다' },
+  { id: 'nade10',   name: '폭죽 놀이',        desc: '한 번의 플레이에서 수류탄으로 10마리를 처치한다' },
+  { id: 'kills100', name: '학살자',           desc: '한 번의 플레이에서 100 처치를 달성한다' },
+  { id: 'clear1',   name: '생존 성공',        desc: '회차를 처음으로 클리어한다' },
+  { id: 'cursed',   name: '저주받은 생존자',  desc: '저주를 켠 채 회차를 클리어한다' },
+  { id: 'souls500', name: '영혼 수집가',      desc: '영혼 조각을 누적 500개 모은다' },
+  { id: 'shop5',    name: '준비된 생존자',    desc: '영구 강화를 총 5단계 구매한다' },
+];
+const meta = {
+  d: null,
+  load() {
+    const raw = store.get('meta', null), r = raw && typeof raw === 'object' ? raw : {};
+    const n = v => Math.max(0, Math.floor(Number(v)) || 0);
+    const d = { souls: n(r.souls), earned: n(r.earned), clears: n(r.clears), topLoop: n(r.topLoop), loopSel: 1, shop: {}, curses: [], ach: {} };
+    for (const s of SHOP) d.shop[s.id] = Math.min(s.max, n(r.shop?.[s.id]));
+    if (Array.isArray(r.curses)) d.curses = r.curses.filter(id => CURSES.some(c => c.id === id));
+    for (const a of ACHS) if (r.ach?.[a.id]) d.ach[a.id] = n(r.ach[a.id]) || 1;
+    d.loopSel = Math.max(1, Math.min(n(r.loopSel) || 1, MAX_LOOP, d.topLoop + 1));
+    this.d = d;
+  },
+  save() { store.set('meta', this.d); },
+  reset() { // 강화 초기화: 영혼 조각, 구매한 강화, 고른 저주와 시작 회차 (업적과 회차 클리어 수는 남는다)
+    Object.assign(this.d, { souls: 0, earned: 0, loopSel: 1, curses: [] });
+    for (const s of SHOP) this.d.shop[s.id] = 0;
+    this.save();
+  },
+};
+meta.load();
+if (Number.isFinite(DEBUG_SOUL) && DEBUG_SOUL >= 0) { meta.d.souls = Math.floor(DEBUG_SOUL); meta.save(); }
+const shopLv = id => meta.d.shop[id] || 0;
+const curseOpen = c => meta.d.clears >= c.need;
+const activeCurses = () => CURSES.filter(c => meta.d.curses.includes(c.id) && curseOpen(c));
+const curseBonusOf = list => list.reduce((a, c) => a + c.bonus, 0);
+const loopSoulMul = L => 1 + 0.35 * (L - 1);
+const fmtTime = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+
+// 업적 토스트 (queued, so several unlocks in one moment show one after another)
+const achQueue = [];
+let achBusy = false;
+function nextAch() {
+  const a = achQueue.shift(), el = document.getElementById('achToast');
+  if (!a) { achBusy = false; el.classList.remove('on'); return; }
+  achBusy = true;
+  el.innerHTML = `<small>업적 달성</small><b>${a.name}</b><span>${a.desc}</span>`;
+  el.classList.add('on');
+  setTimeout(() => { el.classList.remove('on'); setTimeout(nextAch, 380); }, 3200);
+}
+function award(id) {
+  if (NO_REWARD || meta.d.ach[id]) return; // debug runs (?wave / ?weapons) earn nothing
+  const a = ACHS.find(x => x.id === id);
+  if (!a) return;
+  meta.d.ach[id] = Date.now();
+  meta.save();
+  achQueue.push(a);
+  if (!achBusy) nextAch();
+  try { audio.pickup('wpn'); } catch { /* sound is optional */ }
+}
 
 const audio = {
   ctx: null, muted: false, waves: {}, bufs: {}, lastHit: 0, lastHover: 0, stepAlt: false,
@@ -2989,6 +3183,10 @@ const state = {
   zombieSpeed: 2.2,
   zombieHp: 2,
   shake: 0,
+  // 다회차 (see applyMeta)
+  loop: 1, dHp: 1, dSpd: 1, dCnt: 1, dDmg: 1, crit: 0,
+  curse: {}, curseIds: [], curseBonus: 0,
+  bossKills: 0, hits: 0, nadeKills: 0, runTime: 0, won: false, winT: 0,
 };
 
 const bullets = [];
@@ -3022,12 +3220,13 @@ const raycaster = new THREE.Raycaster();
 window.addEventListener('keydown', e => {
   if (menu.key(e)) { e.preventDefault(); return; }
   if (e.code === 'Enter' && !state.running && !document.getElementById('death').classList.contains('hidden')) return startGame();
+  if (e.code === 'Enter' && !state.running && !document.getElementById('victory').classList.contains('hidden')) return nextLoop();
   keys[e.code] = true;
   if (e.code === 'Escape' || e.code === 'KeyP') { if (!e.repeat) setPaused(!state.paused); return; }
   if (state.paused) return;
   if (e.code === 'KeyR') startReload();
   if (e.code === 'KeyG' && !e.repeat) throwGrenade();
-  if (state.choosing && /^Digit[1-3]$/.test(e.code)) choose(+e.code.slice(5) - 1);
+  if (state.choosing && /^Digit[1-4]$/.test(e.code) && +e.code.slice(5) <= offered.length) choose(+e.code.slice(5) - 1);
   else if (state.running && /^Digit[1-4]$/.test(e.code)) switchWeapon(+e.code.slice(5) - 1);
   if (e.code === 'KeyM') {
     const m = audio.toggleMute();
@@ -3144,6 +3343,8 @@ touch.reset = function () {
 
 // the death screen: go again, or back to the title
 document.getElementById('retryBtn').addEventListener('click', () => startGame());
+document.getElementById('nextLoopBtn').addEventListener('click', () => nextLoop());
+document.getElementById('victoryQuitBtn').addEventListener('click', () => { document.getElementById('victory').classList.add('hidden'); quitToTitle(); });
 document.getElementById('deathQuitBtn').addEventListener('click', quitToTitle);
 document.getElementById('resumeBtn').addEventListener('click', () => setPaused(false));
 document.getElementById('quitBtn').addEventListener('click', quitToTitle);
@@ -3164,6 +3365,9 @@ document.getElementById('cards').addEventListener('mouseover', e => {
 const hud = {
   wave: document.getElementById('waveNum'),
   theme: document.getElementById('waveTheme'),
+  loop: document.getElementById('loopTag'),
+  curse: document.getElementById('curseTag'),
+  bossName: document.getElementById('bossName'),
   kills: document.getElementById('kills'),
   zleft: document.getElementById('zleft'),
   bossBar: document.getElementById('bossBar'),
@@ -3190,6 +3394,9 @@ const hud = {
 function updateHUD() {
   hud.wave.textContent = state.wave;
   hud.kills.textContent = state.kills;
+  hud.loop.textContent = '회차 ' + state.loop;
+  const ct = state.curseIds.length ? '저주 ' + state.curseIds.length : '';
+  if (hud.curse.textContent !== ct) hud.curse.textContent = ct;
   const remaining = zombies.length + state.toSpawn;
   hud.zleft.textContent = state.intermission > 0 || state.choosing ? '' : remaining + ' 남음';
   if (hud.health.children.length !== state.maxHp) hud.health.innerHTML = pixelIcon(UPGRADE_ICONS.heal, 'pip').repeat(state.maxHp);
@@ -3349,7 +3556,10 @@ function throwGrenade() {
     hitZombie(z);
     z.position.addScaledVector(dir, z.userData.kb * 6 * fall);
     pushOutOfSolids(z.position, z.userData.radius);
-    if (z.userData.hp <= 0) { audio.zdeath(z.position); killZombie(z, j, dir); }
+    if (z.userData.hp <= 0) {
+      audio.zdeath(z.position); killZombie(z, j, dir);
+      if (++state.nadeKills >= 10) award('nade10');
+    }
   }
   // visuals: a hot fireball, a shock ring on the floor and some flying embers
   const ball = new THREE.Mesh(blastGeo, glowMat(0xffa040, 0.8)), ring = new THREE.Mesh(ringGeo, glowMat(0xffd080, 0.9));
@@ -3495,7 +3705,8 @@ const ENEMY_TYPES = {
 const bossHp = n => 22 + n * 3;
 function enemyHp(type) {
   const c = ENEMY_TYPES[type];
-  return type === 'boss' ? bossHp(state.wave) : Math.max(c.hpMin, state.zombieHp * c.hp) * (state.hpMul || 1);
+  // 회차 and 저주 toughen everything (dHp); the 최종 보스 is spawned stronger on top of this (makeFinalBoss)
+  return (type === 'boss' ? bossHp(state.wave) : Math.max(c.hpMin, state.zombieHp * c.hp) * (state.hpMul || 1)) * state.dHp;
 }
 // materials for the blocky fallback bodies (the zombie keeps its own vertex-colored pair)
 const typeSkins = { zombie: { skin: zombieSkin, hurt: zombieHurt } };
@@ -3693,6 +3904,16 @@ function spawnPoint(out) {
 }
 
 let bossRef = null; // the boss currently up (drives the health bar)
+// the 최종 보스 (wave 20): the usual boss, only bigger, tougher and worth more
+function makeFinalBoss(z) {
+  const u = z.userData;
+  u.final = true;
+  z.scale.multiplyScalar(1.4);
+  u.hp = u.maxHp = u.maxHp * 2.4;
+  u.radius *= 1.4; u.hitR2 *= 1.6; u.reach *= 1.15; u.score = 40; u.kb *= 0.5;
+  u.dmg = Math.max(u.dmg, 2 * state.dDmg);
+  return z;
+}
 function spawnZombie(pos = spawnPoint(new THREE.Vector3()), type = 'zombie') {
   const cfg = ENEMY_TYPES[type], skins = typeSkins[type];
   const kit = ZOMBIE_KITS[(Math.random() * ZOMBIE_KITS.length) | 0];
@@ -3731,7 +3952,7 @@ function spawnZombie(pos = spawnPoint(new THREE.Vector3()), type = 'zombie') {
   const hp = enemyHp(type);
   z.userData = {
     type, skins, hp, maxHp: hp,
-    spd: cfg.speed, reach: cfg.reach, hitR2: cfg.hitR2, dmg: cfg.dmg, radius: cfg.radius, kb: cfg.kb, score: cfg.score,
+    spd: cfg.speed, reach: cfg.reach, hitR2: cfg.hitR2, dmg: cfg.dmg * state.dDmg, radius: cfg.radius, kb: cfg.kb, score: cfg.score,
     pace,                                               // its speed relative to the wave's
     speed: state.zombieSpeed * pace * cfg.speed,
     hurt: 0, body, eyes, pelvis, upper, head, jaw, limbs,
@@ -4224,11 +4445,15 @@ function killZombie(z, idx, dir) {
     state.sinceDrop = 0;
     bossRef = null;
     showBanner('보스 처치', '+' + u.score, 2);
+    state.bossKills++;
+    award('boss1');
   } else maybeDrop(z.position);
   zombieDies(z, dir);
   zombies.splice(idx, 1);
   state.kills += u.score;
+  if (state.kills >= 100) award('kills100');
   wvAddKill();
+  if (u.final && state.running) winRun();
 }
 
 // ===================================================================
@@ -4409,9 +4634,9 @@ let offered = [];
 const PICK_LOCKOUT_MS = 650; // ~ when the last card finishes dealing in
 
 function openPicker(healed) {
-  const pool = UPGRADES.filter(u => (state.upgrades[u.id] || 0) < u.max && (!u.ok || u.ok(state)));
+  const pool = UPGRADES.filter(u => (state.upgrades[u.id] || 0) < u.max && (!u.ok || u.ok(state)) && !(u.id === 'hp' && state.curse.oneHit));
   for (let i = pool.length - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0; [pool[i], pool[j]] = [pool[j], pool[i]]; }
-  offered = pool.slice(0, 3);
+  offered = pool.slice(0, 3 + shopLv('pick')); // 선택지 확장 adds a card
   if (!offered.length) { state.intermission = 3.2; return; } // everything maxed out
   state.choosing = true;
   clearTimeout(choose._t);
@@ -4431,6 +4656,7 @@ function openPicker(healed) {
       `<div class="clvl">${pips}</div></div>`;
   }).join('');
   hud.picker.classList.remove('hidden');
+  hud.cards.classList.toggle('n4', offered.length > 3);
   hud.cards.classList.remove('ready');
   audio.deal(offered.length);
   openPicker._t = setTimeout(() => hud.cards.classList.add('ready'), PICK_LOCKOUT_MS);
@@ -4476,6 +4702,8 @@ function spawnBlood(pos) {
 const DEBUG_WAVE = Math.max(0, Math.min(99, parseInt(new URLSearchParams(location.search).get('wave'), 10) || 0));
 // DEBUG (documented in the README): ?weapons=all unlocks all four weapons (and 3 grenades) from the start
 const DEBUG_WEAPONS = new URLSearchParams(location.search).get('weapons') === 'all';
+// debug runs (?wave=N or ?weapons=all) never earn 영혼 조각, records or 업적
+const NO_REWARD = DEBUG_WAVE > 0 || DEBUG_WEAPONS;
 
 // What a wave is made of. Waves 1-2: zombies only. Skeletons from wave 3 (a growing share), small
 // monsters from wave 4 (they come in packs of 3-4 and count half a zombie each against the budget),
@@ -4513,8 +4741,8 @@ function pickTheme(n) {
 
 function planWave(n, existing, theme = 'plain') {
   const dark = theme === 'dark';
-  const total = Math.max(0, Math.round((5 + n * 3) * (dark ? DARK_COUNT : 1)) - existing);
-  const bosses = n >= 5 && n % 5 === 0 ? (n >= 20 ? 2 : 1) : 0;
+  const total = Math.max(0, Math.round((5 + n * 3) * (dark ? DARK_COUNT : 1) * state.dCnt) - existing);
+  const bosses = n >= 5 && n % 5 === 0 ? (n > FINAL_WAVE ? 2 : 1) : 0; // wave 20 is the single 최종 보스
   const normal = bosses ? Math.max(3, Math.round(total * 0.55)) : total;
   let skK = Math.min(0.4, 0.15 + (n - 3) * 0.05);
   let impK = Math.min(0.35, 0.15 + (n - 4) * 0.04) * 1.5;
@@ -4531,7 +4759,7 @@ function planWave(n, existing, theme = 'plain') {
     order.splice((Math.random() * (order.length + 1)) | 0, 0, ...Array(k).fill('imp'));
     left -= k;
   }
-  for (let i = 0; i < bosses; i++) order.splice(Math.floor(order.length * (0.3 + 0.2 * i)), 0, 'boss');
+  for (let i = 0; i < bosses; i++) order.splice(Math.floor(order.length * (0.3 + 0.2 * i)), 0, n === FINAL_WAVE ? 'finalboss' : 'boss');
   return order;
 }
 // spawn the next enemy in the queue (a whole pack at once for small monsters)
@@ -4547,7 +4775,8 @@ function spawnNext() {
       if (k++ >= 4 || state.queue[0] !== 'imp') break;
       state.queue.shift();
     }
-  } else spawnZombie(undefined, type);
+  } else if (type === 'finalboss') makeFinalBoss(spawnZombie(undefined, 'boss'));
+  else spawnZombie(undefined, type);
   state.toSpawn = state.queue.length;
 }
 
@@ -4557,7 +4786,7 @@ function startWave(n) {
   run.prev = theme;
   state.theme = theme;
   state.hpMul = theme === 'dark' ? DARK_HP : 1;
-  weather.darkTarget = theme === 'dark' ? 1 : 0;
+  weather.darkTarget = theme === 'dark' ? 1 : state.curse.dark ? 0.8 : 0; // 저주: 짙은 어둠
   hud.theme.textContent = th.name ? ' · ' + th.name : '';
   // weapons unlock with the waves: 샷건 3, 소총 6, 저격총 9
   const fresh = WEAPONS.map((w, i) => i).filter(i => !state.unlocked[i] && n >= WEAPONS[i].unlock);
@@ -4566,6 +4795,7 @@ function startWave(n) {
     showToast('새 무기 해금: ' + fresh.map(i => `${WEAPONS[i].name} [${i + 1}]`).join(', '), '#e8d28a', 2800);
     audio.pickup('wpn');
   }
+  if (n >= 10) award('wave10');
   if (!DEBUG_WAVE) {
     if (n >= 5) wvUnlock("WAVE_5");
     if (n >= 10) wvUnlock("WAVE_10");
@@ -4573,7 +4803,7 @@ function startWave(n) {
   }
   // Zombies toughen steadily but slower than upgrades let the player scale, so
   // runs can go long; speed caps below the player's so kiting always works.
-  state.zombieSpeed = Math.min(5.2, 2.3 + n * 0.18);
+  state.zombieSpeed = Math.min(5.8, Math.min(5.2, 2.3 + n * 0.18) * state.dSpd);
   state.zombieHp = 2 + (n - 1) * 0.4;
   // anything already up counts toward the wave (the yard's shamblers when you leave the title)
   state.queue = planWave(n, zombies.length, theme);
@@ -4583,7 +4813,7 @@ function startWave(n) {
   state.intermission = 0;
   weather.target = stormFor(n);
   const omens = { 1: '이미 여기 있다', 5: '비가 내리기 시작한다', 8: '비가 거세진다', 12: '폭풍이 몰아친다', 15: '신이시여, 도우소서' };
-  showBanner('웨이브 ' + n, th.name ? `${th.name} · ${theme === 'boss' ? th.desc : omens[n] || th.desc}` : omens[n] || '점점 더 심해진다', 2.2);
+  showBanner('웨이브 ' + n, n === FINAL_WAVE ? '최종 보스 · 이 밤의 끝' : th.name ? `${th.name} · ${theme === 'boss' ? th.desc : omens[n] || th.desc}` : omens[n] || '점점 더 심해진다', 2.2);
   audio.waveStart(n);
 }
 
@@ -4610,6 +4840,34 @@ const BASE_STATS = { maxHp: 3, magSize: 8, reloadTime: 1.2, fireRate: 0.13, dama
 
 // `keep` carries over what's on the field (coming from the title: the survivor stays where
 // they are and the yard's zombies join wave 1, which starts once the camera is down)
+// 회차 number of the run being played (the title's PLAY starts the 회차 chosen under 저주)
+let curLoop = 1;
+// Apply the 회차 difficulty, the chosen 저주 and the bought 영구 강화 to a fresh run.
+// 회차 k: enemy health +25%, speed +8%, spawn count +15%, damage +10% per step (capped), better drops and 영혼 조각.
+function applyMeta(s) {
+  const k = curLoop - 1, curses = activeCurses(), c = Object.fromEntries(curses.map(x => [x.id, true]));
+  Object.assign(s, {
+    loop: curLoop, curse: c, curseIds: curses.map(x => x.id), curseBonus: curseBonusOf(curses),
+    dHp: (1 + 0.25 * Math.min(k, 7)) * (c.tough ? 1.5 : 1),
+    dSpd: (1 + 0.08 * Math.min(k, 5)) * (c.fast ? 1.2 : 1),
+    dCnt: 1 + 0.15 * Math.min(k, 7),
+    dDmg: 1 + 0.1 * Math.min(k, 5),
+  });
+  s.maxHp = c.oneHit ? 1 : BASE_STATS.maxHp + shopLv('hp');
+  s.hp = s.maxHp;
+  s.magSize = Math.max(3, Math.round(BASE_STATS.magSize * (1 + 0.2 * shopLv('ammo')) * (c.scarce ? 0.6 : 1)));
+  s.reloadTime = BASE_STATS.reloadTime / (1 + 0.08 * shopLv('reload'));
+  s.reloadLen = s.reloadTime;
+  s.speed = BASE_STATS.speed * (1 + 0.04 * shopLv('speed'));
+  s.crit = 0.04 * shopLv('crit');
+  s.dropBonus = 0.015 * shopLv('drop') + Math.min(0.05, 0.01 * k); // higher 회차, better drops
+  s.grenades = Math.min(NADE_MAX, s.grenades + shopLv('nade'));
+  for (let i = 1; i <= shopLv('weapon') && i < WEAPONS.length; i++) s.unlocked[i] = true; // 시작 무기: 샷건, 소총
+  s.mag = magCap(0);
+  s.ammo = WEAPONS.map((w, i) => magCap(i));
+  if (curLoop >= 2) award('loop2');
+}
+
 function resetGame(keep = false) {
   if (!keep) { clearRun(); resetOpenings(); }
   weather.set(0);
@@ -4623,7 +4881,9 @@ function resetGame(keep = false) {
     reloadLen: BASE_STATS.reloadTime, weapon: 0, nadeCd: 0, hpMul: 1, theme: 'plain',
     unlocked: WEAPONS.map((w, i) => i === 0 || DEBUG_WEAPONS), ammo: WEAPONS.map(w => w.mag),
     grenades: DEBUG_WEAPONS ? 3 : 0,
+    bossKills: 0, hits: 0, nadeKills: 0, runTime: 0, won: false, winT: 0,
   });
+  applyMeta(state);
   applyWeaponLook(0);
   if (keep) {
     state.intermission = SWOOP_TIME * 0.85;
@@ -4638,7 +4898,9 @@ function resetGame(keep = false) {
 
 function startGame(fromTitle = false) {
   audio.ensure(); // create/resume AudioContext within the click gesture
+  if (fromTitle) curLoop = meta.d.loopSel;
   document.getElementById('death').classList.add('hidden');
+  document.getElementById('victory').classList.add('hidden');
   title.active = false;
   document.body.classList.remove('titling');
   menuEl.classList.add('gone');
@@ -4659,10 +4921,11 @@ function setPaused(on) {
 
 function quitToTitle() {
   setPaused(false);
-  if (state.running && state.wave > 0 && !DEBUG_WAVE) { // an abandoned run still counts
+  if (state.running && state.wave > 0 && !NO_REWARD) { // an abandoned run still counts
     const b = store.get('best', null);
     records.add(state.wave, state.kills);
     if (state.kills > 0 && (!b || state.kills > b.kills)) store.set('best', { wave: state.wave, kills: state.kills });
+    grantSouls(false);
   }
   state.running = false;
   document.getElementById('death').classList.add('hidden');
@@ -4675,11 +4938,13 @@ function die() {
   state.running = false;
   firing = false;
   document.getElementById('deathStat').textContent =
-    `웨이브 ${state.wave}까지 도달 · ${state.kills} 처치`;
+    `${state.loop > 1 ? `회차 ${state.loop} · ` : ''}웨이브 ${state.wave}까지 도달 · ${state.kills} 처치`;
   // best night is ranked by kills, like the leaderboard
   const best = store.get('best', null), record = state.kills > 0 && (!best || state.kills > best.kills);
-  const rec = DEBUG_WAVE ? null : records.add(state.wave, state.kills); // before 'best' is overwritten (records also reads it)
-  if (record && !DEBUG_WAVE) store.set('best', { wave: state.wave, kills: state.kills });
+  const rec = NO_REWARD ? null : records.add(state.wave, state.kills); // before 'best' is overwritten (records also reads it)
+  if (record && !NO_REWARD) store.set('best', { wave: state.wave, kills: state.kills });
+  const gain = grantSouls(false);
+  document.getElementById('deathSouls').innerHTML = soulText(gain);
   const db = document.getElementById('deathBest');
   db.textContent = rec?.record ? (rec.prev.bestKills ? `이전 최고: 웨이브 ${rec.prev.bestWave} · ${rec.prev.bestKills} 처치` : '')
     : record ? '최고 기록 갱신' : best ? `최고: 웨이브 ${best.wave} · ${best.kills} 처치` : '';
@@ -4692,7 +4957,72 @@ function die() {
   document.getElementById('death').classList.remove('hidden');
   audio.death();
   if (state.wave === 1 && state.shots === 0) wvUnlock("PACIFIST");
-  if (!DEBUG_WAVE) wvSubmitScore(state.kills);
+  if (!NO_REWARD) wvSubmitScore(state.kills);
+}
+
+// ---- 영혼 조각: paid out when a run ends (death, victory, or leaving for the title) ----
+function soulGain(victory) {
+  const base = state.wave * 4 + Math.floor(state.kills / 5) + state.bossKills * 15 + (victory ? 100 : 0);
+  return Math.max(1, Math.round(base * loopSoulMul(state.loop) * (1 + state.curseBonus)));
+}
+function grantSouls(victory) {
+  if (NO_REWARD) return 0;
+  const g = soulGain(victory);
+  meta.d.souls += g; meta.d.earned += g;
+  meta.save();
+  if (meta.d.earned >= 500) award('souls500');
+  return g;
+}
+function soulText(g) {
+  if (NO_REWARD) return '디버그 실행 · 영혼 조각 없음';
+  const parts = [];
+  if (state.loop > 1) parts.push(`회차 ×${loopSoulMul(state.loop).toFixed(2)}`);
+  if (state.curseBonus > 0) parts.push(`저주 +${Math.round(state.curseBonus * 100)}%`);
+  return `영혼 조각 +${g}<small>보유 ${meta.d.souls}${parts.length ? ' · ' + parts.join(' · ') : ''}</small>`;
+}
+
+// ---- 클리어: the 최종 보스 of wave 20 is down ----
+function winRun() {
+  if (!state.running || state.won) return;
+  state.won = true;
+  state.winT = 2.6; // a moment to see it fall; the survivor can't be hurt meanwhile
+  state.queue = []; state.toSpawn = 0;
+  showBanner('최종 보스 처치', '생존 성공', 3);
+  audio.waveClear();
+}
+function showVictory() {
+  state.running = false;
+  state.won = false;
+  firing = false;
+  const prevClears = meta.d.clears;
+  if (!NO_REWARD) {
+    const b = store.get('best', null);
+    records.add(state.wave, state.kills);
+    if (state.kills > 0 && (!b || state.kills > b.kills)) store.set('best', { wave: state.wave, kills: state.kills });
+  }
+  const gain = grantSouls(true);
+  if (!NO_REWARD) {
+    meta.d.clears++;
+    meta.d.topLoop = Math.max(meta.d.topLoop, state.loop);
+    meta.d.loopSel = Math.min(MAX_LOOP, state.loop + 1);
+    meta.save();
+    award('clear1');
+    if (state.curseIds.length) award('cursed');
+  }
+  const fresh = CURSES.filter(c => c.need > prevClears && c.need <= meta.d.clears);
+  document.getElementById('victoryStat').textContent =
+    `${state.loop > 1 ? `회차 ${state.loop} · ` : ''}웨이브 ${state.wave} · ${state.kills} 처치 · ${fmtTime(state.runTime)}`;
+  document.getElementById('victorySouls').innerHTML = soulText(gain);
+  document.getElementById('victoryNote').textContent = [fresh.length && '저주 해금: ' + fresh.map(c => c.name).join(', '),
+    `다음 회차: 회차 ${state.loop + 1} · 영혼 조각 ×${loopSoulMul(state.loop + 1).toFixed(2)}`].filter(Boolean).join('   ·   ');
+  document.getElementById('victory').classList.remove('hidden');
+  audio.waveClear();
+  if (!NO_REWARD) wvSubmitScore(state.kills);
+}
+// 다음 회차로: a fresh run one 회차 up, straight from the victory screen
+function nextLoop() {
+  curLoop = Math.min(MAX_LOOP, state.loop + 1);
+  startGame();
 }
 
 // ===================================================================
@@ -4819,8 +5149,9 @@ const onWavedash = !!Wavedash || [location.href, document.referrer, ...(location
 if (onWavedash) document.querySelector('#menuList [data-act="wavedash"]').remove();
 const menuButtons = [...document.querySelectorAll('#menuList button')];
 const settingRows = [...document.querySelectorAll('#settingRows .srow')];
+const PANEL_IDS = { how: 'howPanel', settings: 'settingsPanel', records: 'recordsPanel', shop: 'shopPanel', curse: 'cursePanel', ach: 'achPanel' };
 const menu = {
-  sel: 0, panel: null, row: 0,
+  sel: 0, panel: null, row: 0, prow: { shop: 0, curse: 0 }, confirm: false,
   select(i, quiet) {
     i = (i + menuButtons.length) % menuButtons.length;
     if (i !== this.sel && !quiet) audio.ui('move');
@@ -4832,10 +5163,11 @@ const menu = {
   },
   open(panel) {
     this.panel = panel;
-    document.getElementById('howPanel').classList.toggle('open', panel === 'how');
-    document.getElementById('settingsPanel').classList.toggle('open', panel === 'settings');
-    document.getElementById('recordsPanel').classList.toggle('open', panel === 'records');
+    for (const [k, id] of Object.entries(PANEL_IDS)) document.getElementById(id).classList.toggle('open', panel === k);
     if (panel === 'records') drawRecords();
+    if (panel === 'shop') { this.confirm = false; drawShop(); }
+    if (panel === 'curse') drawCurse();
+    if (panel === 'ach') drawAch();
     if (panel === 'settings') this.selectRow(this.row, true);
     this.hints();
   },
@@ -4876,6 +5208,8 @@ const menu = {
   hints() {
     const keys = this.panel === 'settings'
       ? [['↑', '↓', '선택'], ['←', '→', '조절'], ['ESC', '뒤로']]
+      : this.panel === 'shop' ? [['↑', '↓', '선택'], ['ENTER', '구매'], ['ESC', '뒤로']]
+      : this.panel === 'curse' ? [['↑', '↓', '선택'], ['ENTER', '켜기/끄기'], ['←', '→', '회차'], ['ESC', '뒤로']]
       : this.panel ? [['ESC', '뒤로']]
       : [['↑', '↓', '선택'], ['ENTER', '확인']];
     document.getElementById('menuHints').innerHTML = keys.map(k =>
@@ -4896,6 +5230,14 @@ const menu = {
       else if (left || right) this.adjust(key, left ? -1 : 1);
       else if (ok && key === 'shake') this.adjust(key, 0);
       else if (back) { audio.ui('back'); this.open(null); }
+    } else if (this.panel === 'shop' || this.panel === 'curse') {
+      const n = this.panel === 'shop' ? SHOP.length + 1 : CURSES.length + 1, p = this.panel;
+      if (up || down) { this.prow[p] = (this.prow[p] + (up ? -1 : 1) + n) % n; this.confirm = false; audio.ui('move'); }
+      else if (p === 'curse' && (left || right) && this.prow.curse === 0) changeLoop(left ? -1 : 1);
+      else if (ok) { if (p === 'shop') shopAct(this.prow.shop); else curseAct(this.prow.curse); }
+      else if (back) { if (this.confirm) { this.confirm = false; } else { audio.ui('back'); this.open(null); } }
+      if (p === 'shop') drawShop(); else drawCurse();
+      document.querySelector(`#${PANEL_IDS[p]} .shrow.sel`)?.scrollIntoView({ block: 'nearest' });
     } else if (this.panel) {
       if (back || ok) { audio.ui('back'); this.open(null); }
     } else if (up) this.select(this.sel - 1);
@@ -4915,7 +5257,8 @@ menu.drawSettings();
 const fmtDate = ms => { const d = new Date(ms); return ms ? `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}` : ''; };
 function drawRecords() {
   const r = records.load();
-  document.getElementById('recSummary').innerHTML = [['최고 웨이브', r.bestWave], ['최고 처치', r.bestKills], ['누적 처치', r.totalKills], ['플레이 횟수', r.totalRuns]]
+  document.getElementById('recSummary').innerHTML = [['최고 웨이브', r.bestWave], ['최고 처치', r.bestKills], ['누적 처치', r.totalKills], ['플레이 횟수', r.totalRuns],
+    ['회차 클리어', meta.d.clears], ['최고 클리어 회차', meta.d.topLoop || '-']]
     .map(([l, v]) => `<div>${l}<b>${v}</b></div>`).join('');
   document.getElementById('recList').innerHTML = r.runs.length
     ? r.runs.map((x, i) => `<li><i>${i + 1}</i><span>웨이브 ${x.wave}</span><span>${x.kills} 처치</span><em>${fmtDate(x.date)}</em></li>`).join('')
@@ -4930,10 +5273,109 @@ document.querySelectorAll('.mpanel').forEach(p => {
 });
 function showBest() {
   const b = store.get('best', null);
+  document.getElementById('titleLoop').innerHTML = `회차 ${meta.d.loopSel}<small>영혼 조각 ${meta.d.souls}</small>`;
   document.getElementById('bestRun').innerHTML = b
     ? `<span class="lbl">최고 기록</span>웨이브 <b>${b.wave}</b> · <b>${b.kills}</b> 처치`
     : '';
 }
+
+// ---- 강화 · 저주 · 업적 panels ----
+const $id = id => document.getElementById(id);
+const ownedLevels = () => SHOP.reduce((a, s) => a + shopLv(s.id), 0);
+function drawShop() {
+  const d = meta.d, sel = menu.prow.shop;
+  $id('shopSouls').textContent = d.souls;
+  $id('shopRows').innerHTML = SHOP.map((s, i) => {
+    const l = shopLv(s.id), maxed = l >= s.max, c = s.cost[l];
+    const pips = Array.from({ length: s.max }, (_, k) => `<i class="${k < l ? 'on' : ''}"></i>`).join('');
+    return `<div class="shrow${i === sel ? ' sel' : ''}${maxed ? ' max' : d.souls >= c ? '' : ' no'}" data-i="${i}">` +
+      `<div><b>${s.name}</b><small>${s.desc} · 현재 ${s.now(l)}</small></div><span class="pips">${pips}</span>` +
+      `<em class="cost">${maxed ? '최대' : c}</em></div>`;
+  }).join('') + `<div class="shrow reset${sel === SHOP.length ? ' sel' : ''}" data-reset="1">` +
+    (menu.confirm
+      ? `<div><b>정말 초기화할까요?</b><small>영혼 조각과 구매한 강화가 모두 사라집니다</small></div><span><button class="mbtn danger" data-yes="1" type="button">확인</button><button class="mbtn" data-no="1" type="button">취소</button></span>`
+      : `<div><b>초기화</b></div><span><button class="mbtn danger" data-ask="1" type="button">초기화</button></span>`) + '</div>';
+}
+function buy(i) {
+  const s = SHOP[i], d = meta.d, l = shopLv(s.id);
+  if (l >= s.max) { audio.ui('back'); return false; }
+  if (d.souls < s.cost[l]) { audio.ui('back'); showShopMsg('영혼 조각이 부족합니다'); return false; }
+  d.souls -= s.cost[l];
+  d.shop[s.id] = l + 1;
+  meta.save();
+  audio.ui('select');
+  if (ownedLevels() >= 5) award('shop5');
+  showBest();
+  return true;
+}
+function showShopMsg(t) { const n = document.querySelector('#shopPanel .mnote'); n.textContent = t; n.style.color = '#d6453c'; setTimeout(() => { n.textContent = '영구 강화는 다음 플레이부터 적용됩니다.'; n.style.color = ''; }, 1600); }
+function shopAct(i) {
+  if (i >= SHOP.length) { // the reset row: first press asks, the second confirms
+    if (!menu.confirm) { menu.confirm = true; audio.ui('select'); return; }
+    menu.confirm = false; meta.reset(); audio.ui('back'); showBest(); return;
+  }
+  menu.confirm = false;
+  buy(i);
+}
+function changeLoop(dir) {
+  const d = meta.d, max = Math.min(MAX_LOOP, d.topLoop + 1), v = Math.max(1, Math.min(max, d.loopSel + dir));
+  if (v === d.loopSel) { audio.ui('back'); return; }
+  d.loopSel = v; meta.save(); audio.ui('move'); showBest();
+}
+function drawCurse() {
+  const d = meta.d, sel = menu.prow.curse, max = Math.min(MAX_LOOP, d.topLoop + 1);
+  $id('curseSouls').textContent = d.souls;
+  $id('curseRows').innerHTML =
+    `<div class="shrow${sel === 0 ? ' sel' : ''}" data-i="0"><div><b>시작 회차</b><small>영혼 조각 ×${loopSoulMul(d.loopSel).toFixed(2)}</small></div>` +
+    `<span class="loopsel"><button class="mbtn" data-d="-1" type="button">◀</button>회차 ${d.loopSel}<button class="mbtn" data-d="1" type="button">▶</button></span><em class="cost">${d.loopSel}/${max}</em></div>` +
+    CURSES.map((c, k) => {
+      const open = curseOpen(c), on = open && d.curses.includes(c.id);
+      return `<div class="shrow${k + 1 === sel ? ' sel' : ''}${on ? ' on' : ''}${open ? '' : ' lock'}" data-i="${k + 1}">` +
+        `<div><b>${c.name}</b><small>${open ? c.desc : `잠김 · 회차 ${c.need}회 클리어 시 해금`}</small></div>` +
+        `<span class="toggle"><i class="${on ? 'on' : ''}">켜짐</i><i class="${on ? '' : 'on'}">꺼짐</i></span><em class="cost">+${Math.round(c.bonus * 100)}%</em></div>`;
+    }).join('') ;
+  const act = activeCurses(), b = curseBonusOf(act);
+  $id('curseNote').innerHTML = act.length
+    ? `켜진 저주 <b>${act.length}</b>개 · 영혼 조각 <b>+${Math.round(b * 100)}%</b>`
+    : '저주를 켜면 더 어려운 대신 영혼 조각을 더 얻습니다.';
+}
+function curseAct(i) {
+  if (i === 0) return; // the 회차 row is adjusted with ◀ ▶
+  const c = CURSES[i - 1];
+  if (!curseOpen(c)) { audio.ui('back'); return; }
+  const d = meta.d, at = d.curses.indexOf(c.id);
+  if (at >= 0) d.curses.splice(at, 1); else d.curses.push(c.id);
+  meta.save(); audio.ui('select');
+}
+function drawAch() {
+  const d = meta.d, n = ACHS.filter(a => d.ach[a.id]).length;
+  $id('achCount').innerHTML = `달성<b>${n} / ${ACHS.length}</b>`;
+  $id('achRows').innerHTML = ACHS.map(a => {
+    const t = d.ach[a.id];
+    return `<div class="shrow ${t ? 'done' : 'undone'}" style="cursor:default;grid-template-columns:1fr auto"><div><b>${a.name}</b><small>${a.desc}</small></div><em class="cost" style="width:auto">${t > 1 ? fmtDate(t) : t ? '달성' : '미달성'}</em></div>`;
+  }).join('');
+}
+// panel clicks (stopPropagation: these panels redraw themselves, which would otherwise look like a click outside)
+$id('shopRows').addEventListener('click', e => {
+  e.stopPropagation();
+  const r = e.target.closest('.shrow');
+  if (!r) return;
+  if (e.target.closest('[data-yes]')) { menu.prow.shop = SHOP.length; menu.confirm = true; shopAct(SHOP.length); }
+  else if (e.target.closest('[data-no]')) { menu.confirm = false; audio.ui('back'); }
+  else if (r.dataset.reset) { menu.prow.shop = SHOP.length; if (!menu.confirm) { menu.confirm = true; audio.ui('select'); } }
+  else { menu.prow.shop = +r.dataset.i; menu.confirm = false; buy(+r.dataset.i); }
+  drawShop();
+});
+$id('curseRows').addEventListener('click', e => {
+  e.stopPropagation();
+  const r = e.target.closest('.shrow');
+  if (!r) return;
+  menu.prow.curse = +r.dataset.i;
+  const b = e.target.closest('[data-d]');
+  if (b) changeLoop(+b.dataset.d); else curseAct(+r.dataset.i);
+  drawCurse();
+});
+$id('achRows').addEventListener('click', e => e.stopPropagation());
 menuButtons.forEach((b, i) => {
   b.addEventListener('mouseenter', () => { if (!menu.panel || menu.panel !== b.dataset.act) menu.select(i); });
   b.addEventListener('click', () => menu.activate(i));
@@ -5002,10 +5444,11 @@ function walkToward(z, dx, dz, speed, turn, dt) {
 }
 
 function hurtPlayer(dmg = 1) {
-  if (state.dmgCd > 0) return false;
+  if (state.dmgCd > 0 || state.won) return false;
   state.chip += dmg; // a half-heart blow only costs a heart on every second hit
-  const lost = Math.floor(state.chip + 1e-6);
-  state.chip -= lost;
+  const lost = state.curse.oneHit ? 1 : Math.floor(state.chip + 1e-6); // 저주: 한 방에 죽음
+  state.chip = state.curse.oneHit ? 0 : state.chip - lost;
+  state.hits++;
   state.hp -= lost;
   state.dmgCd = HURT_IFRAMES;
   damageFlash();
@@ -5156,8 +5599,11 @@ function update(dt) {
     state.nadeCd -= dt;
     updateDrops(dt);
 
+    state.runTime += dt;
     // --- waves ---
-    if (state.choosing) {
+    if (state.won) {
+      if ((state.winT -= dt) <= 0) showVictory();
+    } else if (state.choosing) {
       // wave cleared — waiting on the upgrade pick
     } else if (state.intermission > 0) {
       state.intermission -= dt;
@@ -5174,6 +5620,7 @@ function update(dt) {
       } else if (zombies.length === 0) {
         // wave cleared
         if (state.wave === 1) wvUnlock("WAVE_1"); // survived your first wave
+        if (state.wave >= 5 && state.hits === 0) award('flawless5');
         const healed = state.hp < state.maxHp;
         state.hp = Math.min(state.maxHp, state.hp + 1);
         audio.waveClear();
@@ -5230,8 +5677,10 @@ function update(dt) {
       const dx = z.position.x - (px + sx * t), dz = z.position.z - (pz + sz * t);
       if (dx * dx + dz * dz < z.userData.hitR2) {
         const bu = b.userData, falloff = bu.fall ? 1 - bu.fall * (1 - bu.life / bu.maxLife) : 1; // shotgun pellets lose punch with range
-        z.userData.hp -= state.damage * bu.dmg * falloff * (state.pDamage > 0 ? 2 : 1);
+        const crit = state.crit > 0 && Math.random() < state.crit; // 치명타 (영구 강화)
+        z.userData.hp -= state.damage * bu.dmg * falloff * (state.pDamage > 0 ? 2 : 1) * (crit ? 2 : 1);
         hitZombie(z);
+        if (crit) spawnBlood(z.position);
         // small knockback
         z.position.addScaledVector(b.userData.dir, z.userData.kb * bu.kb);
         if (z.userData.hp <= 0) { audio.zdeath(z.position); killZombie(z, j, b.userData.dir); }
@@ -5258,6 +5707,7 @@ function update(dt) {
   }
   if (state.running || title.active) separateZombies();
   hud.bossBar.classList.toggle('on', !!bossRef && state.running);
+  if (bossRef) { const bn = bossRef.userData.final ? '최종 보스' : '보스'; if (hud.bossName.textContent !== bn) hud.bossName.textContent = bn; }
   if (bossRef) hud.bossFill.style.width = Math.max(0, bossRef.userData.hp / bossRef.userData.maxHp * 100) + '%';
 
   // --- particles ---
