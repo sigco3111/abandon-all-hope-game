@@ -44,11 +44,15 @@
 <table>
   <tr>
     <td align="center"><img src="screenshots/screenshot-gameplay.png" alt="게임 플레이"><br><sub><b>게임 플레이</b></sub></td>
-    <td align="center"><img src="screenshots/screenshot-howto.png" alt="조작 방법"><br><sub><b>조작 방법</b></sub></td>
+    <td align="center"><img src="screenshots/screenshot-boss.png" alt="보스전"><br><sub><b>보스전</b></sub></td>
   </tr>
   <tr>
+    <td align="center"><img src="screenshots/screenshot-upgrade-shop.png" alt="영구 강화"><br><sub><b>영구 강화</b></sub></td>
+    <td align="center"><img src="screenshots/screenshot-touch.png" alt="모바일 터치"><br><sub><b>모바일 터치</b></sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="screenshots/screenshot-howto.png" alt="조작 방법"><br><sub><b>조작 방법</b></sub></td>
     <td align="center"><img src="screenshots/screenshot-pause.png" alt="일시정지"><br><sub><b>일시정지</b></sub></td>
-    <td align="center"><img src="screenshots/screenshot-title.png" alt="타이틀"><br><sub><b>타이틀</b></sub></td>
   </tr>
 </table>
 
