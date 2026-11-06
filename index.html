@@ -1688,6 +1688,170 @@ yard.add([[0.6, 0.55, 5.5, 0, 0.27, 0, 0x3a2f24, 0, 0, 0, 0.18], [0.5, 0.45, 0.0
 CLEARINGS.push([-13.5, 4, 3]);
 bakedMesh(yard);
 
+// --- scenery (step 3): CC0 low-poly models from assets/models/decor/*.glb (see assets/models/license.txt) ---
+// Purely visual: nothing here is solid, shoots back or touches SOLIDS. Positions come from a seeded RNG, so
+// every run looks the same, and they are registered as CLEARINGS before the forest is scattered so no tree
+// grows through them. Each model is drawn with InstancedMesh (one per material part). A model that fails to
+// load is simply skipped, and so is the whole scenery if the loader itself fails.
+//   size: longest side in world units   tint: night dimming   cast: casts shadows   colors: material name -> sRGB hex
+const DECOR = {
+  gravestone_cross: { size: 1.1,  tint: 0.5, cast: true,  colors: { stone: 0x80858c } },
+  gravestone_round: { size: 1.0,  tint: 0.5, cast: true,  colors: { stone: 0x80858c } },
+  cross_wood:       { size: 1.1,  tint: 0.55, colors: { stone: 0x6f7378, wood: 0x5a3f28 } },
+  iron_fence:       { size: 2.0,  tint: 1.0, cast: true,  colors: { metal: 0x2a2d33 } },
+  dead_tree:        { size: 4.6,  tint: 0.6, cast: true },
+  jack_o_lantern:   { size: 0.62, tint: 0.85, glow: true },
+  rock_large:       { size: 1.5,  tint: 1.0, colors: { dirt: 0x4a4741, grass: 0x2d4222 } },
+  bush_large:       { size: 1.5,  tint: 1.0, colors: { grass: 0x28391d } },
+  fire_basket:      { size: 1.3,  tint: 1.0, cast: true, colors: { metal: 0x2b2622 } },
+  bed_single:       { size: 2.3,  tint: 0.6, cast: true },
+  table:            { size: 1.6,  tint: 0.65, cast: true },
+  barrel:           { size: 0.95, tint: 1.0, cast: true },
+  crate:            { size: 0.8,  tint: 1.0, cast: true },
+};
+const DECOR_PLACE = []; // { k, x, z, ry, s }
+const DECOR_FIRES = []; // the two fire baskets near the cabin: { light, flame, base, ph }
+{
+  const drng = seeded(303), dr = (a, b) => a + (b - a) * drng();
+  // never in the way of a door, a window's approach, or an existing prop / earlier decor (CLEARINGS)
+  const blocked = (x, z, pad = 0) =>
+    (Math.abs(x) < 2.4 + pad && z > 9) ||                      // the south door and its lane
+    (x > -7.4 - pad && x < -2.6 + pad && z < -9) ||            // the north door
+    (x > 2.8 - pad && x < 7.2 + pad && z < -9) ||              // the north window
+    (z > 12.5 && Math.abs(x) < 13) ||                          // the title shot's view of the south door
+    (x < -9 && z > -3.6 - pad && z < 2.4 + pad) ||             // the west window
+    (x > 9 && z > -0.2 - pad && z < 5.2 + pad) ||              // the east window
+    CLEARINGS.some(([cx, cz, r]) => (x - cx) ** 2 + (z - cz) ** 2 < (r + pad) ** 2);
+  const put = (k, x, z, ry, s = 1, force = false, y = 0) => {
+    if (!force && blocked(x, z, 0.7)) return false;
+    DECOR_PLACE.push({ k, x, z, ry, s, y });
+    CLEARINGS.push([x, z, 0.35 + DECOR[k].size * s * 0.3]);
+    return true;
+  };
+  const face = (x, z, cx, cz) => Math.atan2(cx - x, cz - z) + dr(-0.35, 0.35); // front toward (cx, cz), a little crooked
+  // try up to `tries` random spots in a disc (or ring) until `n` are placed
+  const scatterAt = (kinds, n, cx, cz, r0, r1, opts = {}) => {
+    for (let i = 0, placed = 0; i < n * 14 && placed < n; i++) {
+      const a = dr(0, Math.PI * 2), r = Math.sqrt(dr(r0 * r0, r1 * r1));
+      const x = cx + Math.cos(a) * r, z = cz + Math.sin(a) * r;
+      const k = kinds[(drng() * kinds.length) | 0];
+      if (put(k, x, z, opts.face ? face(x, z, 0, 0) : dr(0, Math.PI * 2), dr(0.85, 1.2))) placed++;
+    }
+  };
+
+  // inside the cabin, hard against the walls (the doors, windows, shelf and rug stay clear)
+  // (the boards are at y = 0, the forest floor 0.06 lower, hence the lift)
+  put('bed_single', 8.25, -7.7, 0, 1, true, 0.06);           // north-east corner
+  put('table', -8.6, 7.4, Math.PI / 2, 1, true, 0.06);       // by the west wall, south of the coats
+  put('jack_o_lantern', -8.6, 7.4, 0, 1, true, 0.84);        // ... with a pumpkin on it
+  put('barrel', -8.9, 8.9, 0.4, 1, true, 0.06); put('barrel', -8.0, 9.1, 1.6, 0.9, true, 0.06);
+  put('crate', 8.9, 8.8, 0.2, 1, true, 0.06); put('crate', 8.9, 7.9, -0.3, 0.85, true, 0.06);
+
+  // two fire baskets flank the doors, each with a real (flickering) light
+  put('fire_basket', -2.9, 11.1, 0, 1, true);
+  put('fire_basket', -7.6, -11.2, 0, 1, true);
+
+  // a small graveyard to the west, behind the broken fence, with a few iron fence panels toward the cabin
+  const GY = [-17.5, -8.5];
+  for (let i = 0; i < 4; i++) put('iron_fence', -13.9, -10.6 + i * 2.0, Math.PI / 2, 1, false);
+  scatterAt(['gravestone_cross', 'gravestone_round', 'gravestone_round', 'gravestone_cross'], 10, GY[0], GY[1], 0.5, 4.2, { face: true });
+  scatterAt(['cross_wood'], 3, GY[0], GY[1], 0.5, 4.2);
+  put('dead_tree', GY[0] - 2.5, GY[1] - 1.5, dr(0, 6.28), 1.1, true);
+  CLEARINGS.push([GY[0], GY[1], 4.6]); // and the trees keep off the whole plot
+
+  // a corner of rocks, brush and pumpkins to the east
+  const RB = [16.5, -9];
+  scatterAt(['rock_large'], 4, RB[0], RB[1], 0.5, 4, {});
+  scatterAt(['bush_large'], 4, RB[0], RB[1], 0.5, 4.5, {});
+  scatterAt(['jack_o_lantern'], 3, RB[0], RB[1], 0.5, 3.5, {});
+  scatterAt(['cross_wood'], 2, RB[0], RB[1], 1, 4, {});
+  put('dead_tree', RB[0] + 2.2, RB[1] - 2.8, dr(0, 6.28), 1.0, true);
+  CLEARINGS.push([RB[0], RB[1], 4.8]);
+
+  // and bits all round the cabin, out to the edge of the light
+  scatterAt(['rock_large'], 6, 0, 0, 12, 22, {});
+  scatterAt(['bush_large'], 9, 0, 0, 11.5, 22, {});
+  scatterAt(['jack_o_lantern'], 3, 0, 0, 11.5, 18, {});
+  scatterAt(['dead_tree'], 3, 0, 0, 15, 24, {});
+  scatterAt(['barrel', 'crate', 'crate'], 4, 12, 9, 0.5, 3.2, {});
+
+  // two real lights, nothing more: they sit on the baskets and stay dark until a basket's model has loaded
+  for (const p of DECOR_PLACE.filter(q => q.k === 'fire_basket')) {
+    const light = new THREE.PointLight(0xff9a45, 0, 10, 2);
+    light.position.set(p.x, 1.35, p.z);
+    world.add(light);
+    DECOR_FIRES.push({ light, flame: null, base: 6.5, ph: p.x * 1.7, p });
+  }
+}
+function decorFlicker(t) {
+  for (const f of DECOR_FIRES) {
+    if (!f.flame) continue;
+    const k = 0.86 + 0.1 * Math.sin(t * 9.1 + f.ph) + 0.06 * Math.sin(t * 15.7 + f.ph * 2) + 0.04 * Math.sin(t * 3.3 + f.ph);
+    f.light.intensity = f.base * k;
+    f.flame.scale.set(1 - 0.12 * (k - 0.86), 0.85 + 0.6 * (k - 0.5), 1 - 0.12 * (k - 0.86));
+  }
+}
+async function loadDecor() {
+  const { GLTFLoader } = await import('three/addons/loaders/GLTFLoader.js');
+  const loader = new GLTFLoader(), kinds = [...new Set(DECOR_PLACE.map(p => p.k))];
+  await Promise.all(kinds.map(async k => {
+    try {
+      const def = DECOR[k], root = (await loader.loadAsync(`assets/models/decor/${k}.glb`)).scene;
+      root.updateMatrixWorld(true);
+      const box = new THREE.Box3().setFromObject(root), sz = box.getSize(new THREE.Vector3());
+      const sc = def.size / Math.max(sz.x, sz.y, sz.z);
+      if (!isFinite(sc) || sc <= 0) throw new Error('no size');
+      // sit on y = 0, centred on x / z, scaled to `size`
+      const fix = new THREE.Matrix4().makeScale(sc, sc, sc).multiply(new THREE.Matrix4().makeTranslation(-(box.min.x + box.max.x) / 2, -box.min.y, -(box.min.z + box.max.z) / 2));
+      const spots = DECOR_PLACE.filter(p => p.k === k), parts = [];
+      root.traverse(o => {
+        if (!o.isMesh) return;
+        const geo = o.geometry.clone().applyMatrix4(new THREE.Matrix4().multiplyMatrices(fix, o.matrixWorld));
+        const m = Array.isArray(o.material) ? o.material[0] : o.material;
+        const mat = new THREE.MeshStandardMaterial({ map: m.map || null, roughness: 0.95, metalness: 0 });
+        mat.color.copy(m.color || new THREE.Color(1, 1, 1));
+        if (def.colors && def.colors[m.name] != null) mat.color.setHex(def.colors[m.name]);
+        mat.color.multiplyScalar(def.tint);
+        if (def.glow) { mat.emissive.setHex(0xff8a2a); mat.emissiveMap = m.map || null; mat.emissiveIntensity = 0.3; }
+        parts.push([geo, mat]);
+      });
+      const _o = new THREE.Object3D(), _c = new THREE.Color();
+      for (const [geo, mat] of parts) {
+        const im = new THREE.InstancedMesh(geo, mat, spots.length);
+        spots.forEach((p, i) => {
+          _o.position.set(p.x, GROUND_Y + (p.y || 0), p.z);
+          _o.rotation.set(0, p.ry, 0);
+          _o.scale.setScalar(p.s);
+          _o.updateMatrix();
+          im.setMatrixAt(i, _o.matrix);
+          im.setColorAt(i, _c.setScalar(0.85 + drandom() * 0.3));
+        });
+        im.computeBoundingSphere();
+        im.castShadow = !!def.cast; im.receiveShadow = true;
+        world.add(im);
+      }
+      if (k === 'fire_basket') {
+        const top = sz.y * sc;
+        for (const f of DECOR_FIRES) {
+          const flame = new THREE.Group();
+          for (const [r, h, col, op] of [[0.2, 0.62, 0xff7a1c, 0.8], [0.11, 0.42, 0xffd25a, 0.9]]) {
+            const c = new THREE.Mesh(new THREE.ConeGeometry(r, h, 7).translate(0, h / 2, 0),
+              new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: op, depthWrite: false, blending: THREE.AdditiveBlending }));
+            flame.add(c);
+          }
+          flame.position.set(f.p.x, GROUND_Y + top * 0.7, f.p.z);
+          world.add(flame);
+          f.flame = flame;
+        }
+      }
+    } catch (e) {
+      console.debug('[decor] skipped', k, e && e.message);
+    }
+  }));
+}
+const drandom = seeded(909);
+loadDecor().catch(e => console.debug('[decor] scenery unavailable', e && e.message));
+
 const lanternGlass = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.26, 0.2),
   new THREE.MeshStandardMaterial({ color: 0x2a1a08, emissive: 0xffb050, emissiveIntensity: 1.6 }));
 lanternGlass.position.set(2.26, 1.84, 11.3);
@@ -1702,6 +1866,7 @@ function updateWorld(dt) {
     - weather.level * 0.2 * (0.5 + 0.5 * Math.sin(t * 5.3) * Math.sin(t * 2.1)); // and gutters in the storm
   lanternLight.intensity = 7 * f;
   lanternGlass.material.emissiveIntensity = 1.6 * f;
+  decorFlicker(t);
 }
 
 // --- forest: instanced pines, spruces, oaks and dead snags, plus brush on the floor ---
