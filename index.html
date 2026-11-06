@@ -34,6 +34,13 @@
   #waveNum { color: #d6453c; font-weight: bold; }
   #kills { color: #8fae6b; }
 
+  /* boss health bar (top centre, only while a boss is up) */
+  #bossBar { position: absolute; top: 16px; left: 50%; transform: translateX(-50%); width: min(460px, 38vw); text-align: center; opacity: 0; transition: opacity .25s; }
+  #bossBar.on { opacity: 1; }
+  #bossName { font-size: 15px; letter-spacing: 6px; padding-left: 6px; color: #e0524a; font-weight: bold; text-shadow: 0 0 10px #e0524a88, 0 0 2px #000; margin-bottom: 6px; }
+  #bossTrack { height: 14px; background: #1a1012; border: 1px solid #6a2a2a; box-shadow: 0 0 12px #000a; }
+  #bossFill { height: 100%; width: 100%; background: linear-gradient(#e8625a, #8f1f1a); transition: width .12s; }
+
   /* health pips */
   #health { display: flex; gap: 5px; margin-top: 4px; }
   .pip { width: 22px; height: 22px; color: #d6453c; filter: drop-shadow(0 0 4px #d6453c99); }
@@ -293,6 +300,8 @@
       <span class="label" id="zleft"></span>
     </div>
   </div>
+
+  <div id="bossBar"><div id="bossName">보스</div><div id="bossTrack"><div id="bossFill"></div></div></div>
 
   <div id="ammoWrap">
     <div id="mag"></div>
@@ -2540,6 +2549,8 @@ const state = {
   sinceDrop: 0,  // kills since the last drop (pity timer)
   // wave control
   toSpawn: 0,
+  queue: [],       // enemy types still to spawn this wave (toSpawn === queue.length)
+  chip: 0,         // fractional damage carried over (small monsters hit for half a heart)
   spawnTimer: 0,
   intermission: 0,
   choosing: false, // wave cleared, waiting on an upgrade pick
@@ -2620,6 +2631,8 @@ const hud = {
   wave: document.getElementById('waveNum'),
   kills: document.getElementById('kills'),
   zleft: document.getElementById('zleft'),
+  bossBar: document.getElementById('bossBar'),
+  bossFill: document.getElementById('bossFill'),
   health: document.getElementById('health'),
   powerups: document.getElementById('powerups'),
   toast: document.getElementById('toast'),
@@ -2824,73 +2837,116 @@ const zombieHurt = new THREE.MeshStandardMaterial({ vertexColors: true, roughnes
 const zombieEyes = new THREE.MeshBasicMaterial({ color: 0xd9e06a }); // a faint sick glow in the dark
 const bloodPoolMat = new THREE.MeshStandardMaterial({ color: 0x3a0606, roughness: 0.25 }); // wet: catches the muzzle flash
 
-// --- animated 3D zombie (assets/models/zombie.glb, CC0 Quaternius "Ultimate Animated Character Pack") ---
-// Loaded once at startup. Each zombie gets its own SkeletonUtils clone + AnimationMixer; all the
-// movement, hit and damage logic still runs on the zombie's Group exactly as before. If the model
-// or its loaders fail to load, nothing here runs and the old blocky zombies stay in place.
-const ZOMBIE_MODEL_URL = 'assets/models/zombie.glb';
-const ZOMBIE_MODEL_HEIGHT = 2.0;   // standing height in the zombie's local units (Z_SCALE still applies on top)
-const zombieModel = { root: null, clips: null, clone: null, scale: 1, lift: 0 };
-async function loadZombieModel() {
+// --- enemy types -------------------------------------------------------------------------
+// Every enemy is the same Group-based "zombie" (movement, melee, hit and death logic are shared);
+// a type only changes its numbers and its look. hp/speed are relative to the wave's zombie values.
+//   scale: body size   hitR2: squared bullet hit radius   reach: melee range multiplier
+//   dmg: hearts per blow (0.5 = two blows per heart)    score: kills credited when it dies
+//   tint/flat: look of the built-in blocky fallback body, used until (or unless) the 3D model loads
+const ENEMY_TYPES = {
+  zombie:   { label: '좀비',      scale: 1,    hp: 1,   hpMin: 0,    speed: 1,    dmg: 1,   hitR2: 0.55, reach: 1,   radius: 0.4, kb: 0.25, score: 1,  tint: null },
+  skeleton: { label: '스켈레톤',  scale: 0.95, hp: 0.5, hpMin: 1,    speed: 1.4,  dmg: 1,   hitR2: 0.5,  reach: 1,   radius: 0.4, kb: 0.3,  score: 2,  tint: 0xe6e0cc, flat: true },
+  imp:      { label: '작은 괴물', scale: 0.5,  hp: 0.3, hpMin: 0.75, speed: 1.15, dmg: 0.5, hitR2: 0.35, reach: 0.8, radius: 0.3, kb: 0.4,  score: 1,  tint: 0xa24cd8, flat: true },
+  boss:     { label: '보스',      scale: 2.1,  hp: 0,   hpMin: 0,    speed: 0.55, dmg: 2,   hitR2: 1.5,  reach: 1.8, radius: 0.6, kb: 0.03, score: 15, tint: 0xc0504a },
+};
+const bossHp = n => 22 + n * 3;
+function enemyHp(type) {
+  const c = ENEMY_TYPES[type];
+  return type === 'boss' ? bossHp(state.wave) : Math.max(c.hpMin, state.zombieHp * c.hp);
+}
+// materials for the blocky fallback bodies (the zombie keeps its own vertex-colored pair)
+const typeSkins = { zombie: { skin: zombieSkin, hurt: zombieHurt } };
+for (const [k, c] of Object.entries(ENEMY_TYPES)) {
+  if (k === 'zombie') continue;
+  const base = { roughness: 0.9, color: c.tint, vertexColors: !c.flat };
+  typeSkins[k] = {
+    skin: new THREE.MeshStandardMaterial(base),
+    hurt: new THREE.MeshStandardMaterial({ ...base, emissive: 0xd8e8b0, emissiveIntensity: 0.45 }),
+  };
+}
+
+// --- animated 3D models (assets/models/*.glb, all CC0 Quaternius, see assets/models/license.txt) ---
+// Each is loaded once at startup (the zombie first). Every enemy gets its own SkeletonUtils clone +
+// AnimationMixer. If a model or the loaders fail, that type simply keeps its blocky body.
+//   clips: the model's own clip names for the four roles   walkRef: ground speed one walk cycle covers
+//   atk: attack clip speed   colors: material name -> override color (sRGB hex)   mul: tint multiplied in
+const MODELS = {
+  zombie:   { url: 'assets/models/zombie.glb',        clips: { idle: 'Idle', walk: 'Walk',    attack: 'Punch',  dead: 'Defeat' }, walkRef: 1.7, atk: 1.4 },
+  skeleton: { url: 'assets/models/skeleton.glb',      clips: { idle: 'Idle', walk: 'Running', attack: 'Attack', dead: 'Death'  }, walkRef: 4.0, atk: 1.1, colors: { Skeleton: 0xe6e0cc } },
+  imp:      { url: 'assets/models/small_monster.glb', clips: { idle: 'Idle', walk: 'Walk',    attack: 'Attack', dead: 'Death'  }, walkRef: 2.4, atk: 0.8, colors: { Body: 0xa24cd8 } },
+  boss:     { url: 'assets/models/boss_mech.glb',     clips: { idle: 'Idle', walk: 'Walk',    attack: 'Punch',  dead: 'Death'  }, walkRef: 1.8, atk: 0.9, mul: 0xffd0c0 },
+};
+const ZOMBIE_MODEL_HEIGHT = 2.0;   // standing height in the enemy's local units (Z_SCALE and the type's scale apply on top)
+const modelLib = {};               // type -> { root, clips, scale, lift }
+let gltfTools = null;
+async function loadModel(type) {
   try {
-    const [{ GLTFLoader }, { clone }] = await Promise.all([
+    gltfTools ||= await Promise.all([
       import('three/addons/loaders/GLTFLoader.js'),
       import('three/addons/utils/SkeletonUtils.js'),
-    ]);
-    const gltf = await new GLTFLoader().loadAsync(ZOMBIE_MODEL_URL);
+    ]).then(([g, s]) => ({ GLTFLoader: g.GLTFLoader, clone: s.clone }));
+    const gltf = await new gltfTools.GLTFLoader().loadAsync(MODELS[type].url);
     const root = gltf.scene;
     root.updateMatrixWorld(true);
     const box = new THREE.Box3().setFromObject(root);
     const h = box.max.y - box.min.y;
-    if (!(h > 0) || !gltf.animations.length) throw new Error('zombie model has no usable size/animations');
-    zombieModel.scale = ZOMBIE_MODEL_HEIGHT / h;
-    zombieModel.lift = -box.min.y * zombieModel.scale;
-    zombieModel.root = root; zombieModel.clips = gltf.animations; zombieModel.clone = clone;
-    for (const z of zombies) attachRig(z); // zombies spawned before the model arrived (title crowd)
+    if (!(h > 0) || !gltf.animations.length) throw new Error(type + ' model has no usable size/animations');
+    const names = Object.values(MODELS[type].clips);
+    for (const n of names) if (!gltf.animations.some(c => c.name === n)) throw new Error('missing clip ' + n);
+    modelLib[type] = { root, clips: gltf.animations, clone: gltfTools.clone, scale: ZOMBIE_MODEL_HEIGHT / h, lift: -box.min.y * ZOMBIE_MODEL_HEIGHT / h };
+    for (const z of zombies) attachRig(z); // enemies spawned before the model arrived (title crowd)
   } catch (e) {
-    console.warn('[zombie model] using the built-in zombies instead:', e);
+    console.warn('[enemy model] using the built-in ' + type + ' body instead:', e);
   }
+}
+async function loadModels() {
+  await loadModel('zombie');
+  await Promise.all(['skeleton', 'imp', 'boss'].map(loadModel));
 }
 
 function attachRig(z) {
-  const m = zombieModel, u = z.userData;
-  if (!m.root || u.rig) return;
+  const u = z.userData, m = modelLib[u.type], def = MODELS[u.type];
+  if (!m || u.rig) return;
   try {
     const inst = m.clone(m.root);
     inst.scale.multiplyScalar(m.scale);
     inst.position.y = m.lift;
-    const tint = 0.85 + Math.random() * 0.3, mats = [];
+    const tint = def.colors ? 0.9 + Math.random() * 0.1 : 0.85 + Math.random() * 0.3, mats = [];
     inst.traverse(o => {
       if (!o.isMesh) return;
       o.frustumCulled = false;
       o.castShadow = true;
-      const cl = mat => { const c = mat.clone(); c.color.multiplyScalar(tint); mats.push(c); return c; };
+      const cl = mat => {
+        const c = mat.clone();
+        if (def.colors && def.colors[mat.name] != null) c.color.setHex(def.colors[mat.name]);
+        else if (def.mul != null) c.color.multiply(new THREE.Color(def.mul));
+        c.color.multiplyScalar(tint);
+        mats.push(c); return c;
+      };
       o.material = Array.isArray(o.material) ? o.material.map(cl) : cl(o.material);
     });
     const mixer = new THREE.AnimationMixer(inst), actions = {};
-    for (const name of ['Idle', 'Walk', 'Punch', 'Defeat']) {
-      const clip = m.clips.find(c => c.name === name);
-      if (!clip) throw new Error('missing clip ' + name);
-      const a = actions[name] = mixer.clipAction(clip);
-      if (name === 'Punch' || name === 'Defeat') { a.setLoop(THREE.LoopOnce, 1); a.clampWhenFinished = true; }
+    for (const [role, name] of Object.entries(def.clips)) {
+      const a = actions[role] = mixer.clipAction(m.clips.find(c => c.name === name));
+      if (role === 'attack' || role === 'dead') { a.setLoop(THREE.LoopOnce, 1); a.clampWhenFinished = true; }
     }
     const holder = new THREE.Group();
     holder.add(inst);
     z.add(holder);
-    u.rig = { holder, inst, mixer, actions, mats, cur: null };
-    rigPlay(u.rig, 'Idle', 0);
+    u.rig = { holder, inst, mixer, actions, mats, cur: null, walkRef: def.walkRef, atk: def.atk };
+    rigPlay(u.rig, 'idle', 0);
     // swap out the blocky body for good
     for (const b of u.body) b.visible = false;
     u.eyes.visible = false;
   } catch (e) {
-    console.warn('[zombie model] could not attach, keeping the built-in zombie:', e);
+    console.warn('[enemy model] could not attach, keeping the built-in ' + u.type + ':', e);
     if (u.rig) { z.remove(u.rig.holder); u.rig = null; }
   }
 }
 
-// crossfade to a clip (a clip already playing just has its speed updated)
-function rigPlay(r, name, fade = 0.2, speed = 1, randomStart = false) {
-  const a = r.actions[name];
+// crossfade to a clip role (a clip already playing just has its speed updated)
+function rigPlay(r, role, fade = 0.2, speed = 1, randomStart = false) {
+  const a = r.actions[role];
   if (r.cur === a) { a.timeScale = speed; return; }
   if (r.cur) r.cur.fadeOut(fade);
   a.reset();
@@ -2900,13 +2956,13 @@ function rigPlay(r, name, fade = 0.2, speed = 1, randomStart = false) {
   r.cur = a;
 }
 
-// per-frame: pick the clip from the zombie's state (the same flags the old rig read), advance the mixer
+// per-frame: pick the clip from the enemy's state (the same flags the old rig read), advance the mixer
 function rigStep(z, dt) {
   const u = z.userData, r = u.rig;
   if (!u.dying) {
-    if (u.swing >= 0) rigPlay(r, 'Punch', 0.08, 1.4);                 // swinging at you or a door/window
-    else if (u.gait > 0.3 && u.climb < 0) rigPlay(r, 'Walk', 0.2, THREE.MathUtils.clamp(u.speed * u.gait / 1.7, 0.7, 2.8), true);
-    else rigPlay(r, 'Idle', 0.25);
+    if (u.swing >= 0) rigPlay(r, 'attack', 0.08, r.atk);               // swinging at you or a door/window
+    else if (u.gait > 0.3 && u.climb < 0) rigPlay(r, 'walk', 0.2, THREE.MathUtils.clamp(u.speed * u.gait / r.walkRef, 0.7, 2.8), true);
+    else rigPlay(r, 'idle', 0.25);
     r.holder.rotation.x = -0.35 * u.flinch;                            // rock back when shot
   }
   r.mixer.update(dt);
@@ -2915,44 +2971,52 @@ function rigStep(z, dt) {
 // hurt flash on/off (old blocky body and the model)
 function flashZombie(z, on) {
   const u = z.userData;
-  for (const m of u.body) m.material = on ? zombieHurt : zombieSkin;
+  for (const m of u.body) m.material = on ? u.skins.hurt : u.skins.skin;
   if (u.rig) for (const m of u.rig.mats) { m.emissive.setHex(on ? 0xd8e8b0 : 0x000000); m.emissiveIntensity = on ? 0.45 : 0; }
 }
 
-// freeze a settled model corpse into one static vertex-colored mesh (skinning applied once on the CPU)
+// freeze a settled model corpse into one static mesh (skinning applied once on the CPU).
+// Plain-colored models bake vertex colors; a textured one (the boss) bakes its UVs and keeps its texture.
 const _rbV = new THREE.Vector3();
 function bakeRigCorpse(z) {
-  const u = z.userData, r = u.rig;
+  const u = z.userData, r = u.rig, lib = modelLib[u.type];
   z.updateMatrixWorld(true);
-  const P = [], C = [];
+  const P = [], C = [], UV = [];
+  let tex = null;
   r.inst.traverse(m => {
     if (!m.isSkinnedMesh) return;
-    const g = m.geometry, pos = g.attributes.position, idx = g.index;
+    const g = m.geometry, pos = g.attributes.position, uv = g.attributes.uv, idx = g.index;
     const mats = Array.isArray(m.material) ? m.material : [m.material];
     const groups = g.groups.length ? g.groups : [{ start: 0, count: idx ? idx.count : pos.count, materialIndex: 0 }];
     for (const gr of groups) {
-      const col = mats[gr.materialIndex].color;
+      const mat = mats[gr.materialIndex], col = mat.color;
+      if (mat.map && uv) tex = mat;
       for (let i = gr.start; i < gr.start + gr.count; i++) {
         const vi = idx ? idx.getX(i) : i;
         _rbV.fromBufferAttribute(pos, vi);
         m.applyBoneTransform(vi, _rbV);
         _rbV.applyMatrix4(m.matrixWorld);
         P.push(_rbV.x, _rbV.y, _rbV.z); C.push(col.r, col.g, col.b);
+        if (uv) UV.push(uv.getX(vi), uv.getY(vi));
       }
     }
   });
   const g = new THREE.BufferGeometry();
   g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3));
-  g.setAttribute('color', new THREE.Float32BufferAttribute(C, 3));
+  let mat = zombieSkin;
+  if (tex) {
+    g.setAttribute('uv', new THREE.Float32BufferAttribute(UV, 2));
+    mat = lib.bakedMat ||= new THREE.MeshStandardMaterial({ map: tex.map, color: tex.color.clone(), roughness: 0.9 }); // shared, never disposed per corpse
+  } else g.setAttribute('color', new THREE.Float32BufferAttribute(C, 3));
   g.computeVertexNormals();
-  u.baked = new THREE.Mesh(g, zombieSkin);
+  u.baked = new THREE.Mesh(g, mat);
   u.baked.castShadow = u.baked.receiveShadow = true;
   r.mixer.stopAllAction();
   for (const m of r.mats) m.dispose();
   scene.remove(z);
   scene.add(u.baked);
 }
-loadZombieModel();
+loadModels();
 
 // Spawn points sit just past the edge of the gameplay view (worked out from where the
 // follow camera will be, whatever the window's shape), so nothing pops in on screen.
@@ -2985,16 +3049,18 @@ function spawnPoint(out) {
   return out;
 }
 
-function spawnZombie(pos = spawnPoint(new THREE.Vector3())) {
+let bossRef = null; // the boss currently up (drives the health bar)
+function spawnZombie(pos = spawnPoint(new THREE.Vector3()), type = 'zombie') {
+  const cfg = ENEMY_TYPES[type], skins = typeSkins[type];
   const kit = ZOMBIE_KITS[(Math.random() * ZOMBIE_KITS.length) | 0];
   const z = new THREE.Group();
   z.rotation.order = 'YXZ';
   const body = [];
-  const mesh = (geo, parent, mat = zombieSkin) => {
+  const mesh = (geo, parent, mat = skins.skin) => {
     const m = new THREE.Mesh(geo, mat);
     m.castShadow = mat !== zombieEyes;
     parent.add(m);
-    if (mat === zombieSkin) body.push(m);
+    if (mat === skins.skin) body.push(m);
     return m;
   };
   const pelvis = mesh(kit.pelvis, z);
@@ -3016,13 +3082,15 @@ function spawnZombie(pos = spawnPoint(new THREE.Vector3())) {
   const limbs = [side(1), side(-1)];
 
   z.position.set(pos.x, 0, pos.z);
-  z.scale.setScalar(Z_SCALE * (0.94 + Math.random() * 0.12));
-  const limp = Math.random() < 0.45 ? 0.5 + Math.random() * 0.5 : 0;
-  const pace = 0.85 + Math.random() * 0.3;
+  z.scale.setScalar(Z_SCALE * cfg.scale * (type === 'boss' ? 1 : 0.94 + Math.random() * 0.12));
+  const limp = type !== 'boss' && Math.random() < 0.45 ? 0.5 + Math.random() * 0.5 : 0;
+  const pace = type === 'boss' ? 1 : 0.85 + Math.random() * 0.3;
+  const hp = enemyHp(type);
   z.userData = {
-    hp: state.zombieHp,
+    type, skins, hp, maxHp: hp,
+    spd: cfg.speed, reach: cfg.reach, hitR2: cfg.hitR2, dmg: cfg.dmg, radius: cfg.radius, kb: cfg.kb, score: cfg.score,
     pace,                                               // its speed relative to the wave's
-    speed: state.zombieSpeed * pace,
+    speed: state.zombieSpeed * pace * cfg.speed,
     hurt: 0, body, eyes, pelvis, upper, head, jaw, limbs,
     // gait personality
     phase: Math.random(),
@@ -3048,6 +3116,7 @@ function spawnZombie(pos = spawnPoint(new THREE.Vector3())) {
   attachRig(z);
   scene.add(z);
   zombies.push(z);
+  if (type === 'boss') bossRef = z;
   return z;
 }
 
@@ -3219,7 +3288,7 @@ function bakeCorpse(z) {
   g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
   g.setAttribute('normal', new THREE.BufferAttribute(nrm, 3));
   g.setAttribute('color', new THREE.BufferAttribute(col, 3));
-  u.baked = new THREE.Mesh(g, zombieSkin);
+  u.baked = new THREE.Mesh(g, u.skins.skin);
   u.baked.castShadow = u.baked.receiveShadow = true;
   scene.remove(z);
   scene.add(u.baked);
@@ -3253,7 +3322,7 @@ function zombieDies(z, dir) {
   // fall along the shot (or away from the survivor) — forward if hit from behind
   const fx = dir ? dir.x : z.position.x - player.position.x, fz = dir ? dir.z : z.position.z - player.position.z;
   u.fallDir = fx * Math.sin(u.heading) + fz * Math.cos(u.heading) >= 0 ? 1 : -1;
-  if (u.rig) { u.dying = true; u.rig.holder.rotation.x = 0; rigPlay(u.rig, 'Defeat', 0.1); } // goes limp while the group topples as before
+  if (u.rig) { u.dying = true; u.rig.holder.rotation.x = 0; rigPlay(u.rig, 'dead', 0.1); } // goes limp while the group topples as before
   // land on top of any bodies already lying where this one falls
   const dx = Math.sin(u.heading) * u.fallDir, dz = Math.cos(u.heading) * u.fallDir;
   u.points = bodyPoints(z.position.x, z.position.z, dx, dz, z.scale.x);
@@ -3269,7 +3338,7 @@ function zombieDies(z, dir) {
   pool.receiveShadow = true;
   pool.position.set(z.position.x + Math.sin(u.heading) * u.fallDir * 0.9, 0.045, z.position.z + Math.cos(u.heading) * u.fallDir * 0.9);
   pool.rotation.y = Math.random() * Math.PI;
-  u.pool = pool; u.poolSize = 1.1 + Math.random() * 0.6;
+  u.pool = pool; u.poolSize = (1.1 + Math.random() * 0.6) * ENEMY_TYPES[u.type].scale;
   pool.scale.setScalar(0.05);
   scene.add(pool);
   corpses.push(z);
@@ -3411,10 +3480,10 @@ function toLocal(b, x, z) {
   _local.x = dx * b.c - dz * b.s; _local.z = dx * b.s + dz * b.c;
   return _local;
 }
-function pushOutOfSolids(pos) {
+function pushOutOfSolids(pos, rad = Z_RADIUS) {
   for (const b of SOLIDS) {
     const { x: lx, z: lz } = toLocal(b, pos.x, pos.z);
-    const ex = b.hx + Z_RADIUS, ez = b.hz + Z_RADIUS;
+    const ex = b.hx + rad, ez = b.hz + rad;
     const px = ex - Math.abs(lx), pz = ez - Math.abs(lz);
     if (px <= 0 || pz <= 0) continue;
     // out through the nearest face, a hair clear of it so it doesn't read as still touching
@@ -3500,11 +3569,20 @@ function routeAround(z, tx, tz) {
 
 function killZombie(z, idx, dir) {
   if (z.userData.climb >= 0) endClimb(z, true);
+  const u = z.userData;
   spawnBlood(z.position);
-  maybeDrop(z.position);
+  if (u.type === 'boss') {
+    // the boss always leaves a power-up (and a medkit if you're hurt), and a big score
+    for (let i = 0; i < 2; i++) spawnBlood(z.position);
+    spawnDrop(DROP_TYPES.find(t => t.id === (Math.random() < 0.5 ? 'dmg' : 'ammo')), z.position);
+    if (state.hp < state.maxHp) spawnDrop(DROP_TYPES[0], { x: z.position.x + 1.4, z: z.position.z + 0.8 });
+    state.sinceDrop = 0;
+    bossRef = null;
+    showBanner('보스 처치', '+' + u.score, 2);
+  } else maybeDrop(z.position);
   zombieDies(z, dir);
   zombies.splice(idx, 1);
-  state.kills++;
+  state.kills += u.score;
   wvAddKill();
 }
 
@@ -3709,23 +3787,66 @@ function spawnBlood(pos) {
 // ===================================================================
 // WAVES
 // ===================================================================
+// DEBUG (documented in the README): ?wave=N starts the run at wave N (e.g. ?wave=5 for the first boss)
+const DEBUG_WAVE = Math.max(0, Math.min(99, parseInt(new URLSearchParams(location.search).get('wave'), 10) || 0));
+
+// What a wave is made of. Waves 1-2: zombies only. Skeletons from wave 3 (a growing share), small
+// monsters from wave 4 (they come in packs of 3-4 and count half a zombie each against the budget),
+// and a boss on every 5th wave, which has fewer ordinary enemies. Returns the spawn order.
+function planWave(n, existing) {
+  const total = Math.max(0, 5 + n * 3 - existing);
+  const bosses = n >= 5 && n % 5 === 0 ? (n >= 20 ? 2 : 1) : 0;
+  const normal = bosses ? Math.max(3, Math.round(total * 0.55)) : total;
+  const nSk = n >= 3 ? Math.round(normal * Math.min(0.4, 0.15 + (n - 3) * 0.05)) : 0;
+  const nImp = n >= 4 ? Math.round(normal * Math.min(0.35, 0.15 + (n - 4) * 0.04) * 1.5) : 0;
+  const nZ = Math.max(1, normal - nSk - Math.ceil(nImp / 2));
+  const order = [...Array(nZ).fill('zombie'), ...Array(nSk).fill('skeleton')];
+  for (let i = order.length - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0; [order[i], order[j]] = [order[j], order[i]]; }
+  for (let left = nImp; left > 0;) { // packs of imps dropped in at random places
+    const k = Math.min(left, 3 + ((Math.random() * 2) | 0));
+    order.splice((Math.random() * (order.length + 1)) | 0, 0, ...Array(k).fill('imp'));
+    left -= k;
+  }
+  for (let i = 0; i < bosses; i++) order.splice(Math.floor(order.length * (0.3 + 0.2 * i)), 0, 'boss');
+  return order;
+}
+// spawn the next enemy in the queue (a whole pack at once for small monsters)
+function spawnNext() {
+  const type = state.queue.shift();
+  if (type === 'imp') {
+    const c = spawnPoint(new THREE.Vector3());
+    let k = 1;
+    for (;;) {
+      const p = new THREE.Vector3(c.x + (Math.random() - 0.5) * 2.4, 0, c.z + (Math.random() - 0.5) * 2.4);
+      pushOutOfSolids(p, ENEMY_TYPES.imp.radius);
+      spawnZombie(p, 'imp');
+      if (k++ >= 4 || state.queue[0] !== 'imp') break;
+      state.queue.shift();
+    }
+  } else spawnZombie(undefined, type);
+  state.toSpawn = state.queue.length;
+}
+
 function startWave(n) {
   state.wave = n;
-  if (n >= 5) wvUnlock("WAVE_5");
-  if (n >= 10) wvUnlock("WAVE_10");
-  if (n >= 15) wvUnlock("WAVE_15");
+  if (!DEBUG_WAVE) {
+    if (n >= 5) wvUnlock("WAVE_5");
+    if (n >= 10) wvUnlock("WAVE_10");
+    if (n >= 15) wvUnlock("WAVE_15");
+  }
   // Zombies toughen steadily but slower than upgrades let the player scale, so
   // runs can go long; speed caps below the player's so kiting always works.
   state.zombieSpeed = Math.min(5.2, 2.3 + n * 0.18);
   state.zombieHp = 2 + (n - 1) * 0.4;
   // anything already up counts toward the wave (the yard's shamblers when you leave the title)
-  state.toSpawn = Math.max(0, 5 + n * 3 - zombies.length);
-  for (const z of zombies) { z.userData.speed = state.zombieSpeed * z.userData.pace; z.userData.hp = state.zombieHp; }
+  state.queue = planWave(n, zombies.length);
+  state.toSpawn = state.queue.length;
+  for (const z of zombies) { const u = z.userData; u.speed = state.zombieSpeed * u.pace * u.spd; u.hp = u.maxHp = enemyHp(u.type); }
   state.spawnTimer = 0;
   state.intermission = 0;
   weather.target = stormFor(n);
   const omens = { 1: '이미 여기 있다', 5: '비가 내리기 시작한다', 8: '비가 거세진다', 12: '폭풍이 몰아친다', 15: '신이시여, 도우소서' };
-  showBanner('웨이브 ' + n, omens[n] || '점점 더 심해진다');
+  showBanner('웨이브 ' + n, n >= 5 && n % 5 === 0 ? '보스 출현' : omens[n] || '점점 더 심해진다');
   audio.waveStart(n);
 }
 
@@ -3740,6 +3861,7 @@ function clearRun() {
   for (const d of drops) scene.remove(d);
   for (const d of debris) scene.remove(d);
   removeCorpses();
+  bossRef = null;
   bullets.length = 0; zombies.length = 0; particles.length = 0; drops.length = 0; debris.length = 0;
   hud.picker.classList.add('hidden');
 }
@@ -3755,16 +3877,17 @@ function resetGame(keep = false) {
   Object.assign(state, {
     ...BASE_STATS, running: true, hp: BASE_STATS.maxHp, kills: 0, shots: 0, wave: 0,
     mag: BASE_STATS.magSize, reloading: false, reloadT: 0,
-    fireCd: 0, dmgCd: 0, toSpawn: 0, spawnTimer: 0,
+    fireCd: 0, dmgCd: 0, toSpawn: 0, queue: [], chip: 0, spawnTimer: 0,
     intermission: 0, choosing: false, shake: 0, upgrades: {},
     pDamage: 0, pAmmo: 0, sinceDrop: 0,
   });
   if (keep) {
     state.intermission = SWOOP_TIME * 0.85;
+    if (DEBUG_WAVE > 1) state.wave = DEBUG_WAVE - 1; // the intermission ends in startWave(wave + 1)
     for (const z of zombies) Object.assign(z.userData, { cross: null, idle: 0, via: -1 });
   } else {
     player.position.set(0, 0, 0);
-    startWave(1);
+    startWave(DEBUG_WAVE || 1);
   }
   updateHUD();
 }
@@ -3804,14 +3927,14 @@ function die() {
     `웨이브 ${state.wave}까지 도달 · ${state.kills} 처치`;
   // best night is ranked by kills, like the leaderboard
   const best = store.get('best', null), record = state.kills > 0 && (!best || state.kills > best.kills);
-  if (record) store.set('best', { wave: state.wave, kills: state.kills });
+  if (record && !DEBUG_WAVE) store.set('best', { wave: state.wave, kills: state.kills });
   const db = document.getElementById('deathBest');
   db.textContent = record ? '최고 기록 갱신' : best ? `최고: 웨이브 ${best.wave} · ${best.kills} 처치` : '';
   db.classList.toggle('record', record);
   document.getElementById('death').classList.remove('hidden');
   audio.death();
   if (state.wave === 1 && state.shots === 0) wvUnlock("PACIFIST");
-  wvSubmitScore(state.kills);
+  if (!DEBUG_WAVE) wvSubmitScore(state.kills);
 }
 
 // ===================================================================
@@ -4102,9 +4225,12 @@ function walkToward(z, dx, dz, speed, turn, dt) {
   z.position.z += Math.cos(ud.heading) * v * dt;
 }
 
-function hurtPlayer() {
+function hurtPlayer(dmg = 1) {
   if (state.dmgCd > 0) return false;
-  state.hp--;
+  state.chip += dmg; // a half-heart blow only costs a heart on every second hit
+  const lost = Math.floor(state.chip + 1e-6);
+  state.chip -= lost;
+  state.hp -= lost;
   state.dmgCd = HURT_IFRAMES;
   damageFlash();
   audio.hurt();
@@ -4126,10 +4252,10 @@ function chaseZombie(z, dt) {
     if (!ud.struck && ud.swing >= Z_STRIKE) {
       ud.struck = true;
       if (o) hitOpening(o);
-      else if (!(pd < Z_HIT_RANGE && !wallBetween(z.position, p) && hurtPlayer())) audio.swipe(z.position);
+      else if (!(pd < Z_HIT_RANGE * ud.reach && !wallBetween(z.position, p) && hurtPlayer(ud.dmg))) audio.swipe(z.position);
     }
     if (ud.swing >= Z_SWING) { ud.swing = -1; ud.swingCd = rnd(0.25, 0.6); }
-  } else if (pd < (ud.standing ? Z_LET_GO : Z_REACH) && !wallBetween(z.position, p)) {
+  } else if (pd < (ud.standing ? Z_LET_GO : Z_REACH) * ud.reach && !wallBetween(z.position, p)) {
     // at arm's length: stand, square up, and swing as soon as it's facing you (no
     // cooldown left over from battering its way in)
     if (!ud.standing) ud.swingCd = 0;
@@ -4192,8 +4318,9 @@ function separateZombies() {
     const a = zombies[i].position;
     for (let k = i + 1; k < zombies.length; k++) {
       const b = zombies[k].position, dx = b.x - a.x, dz = b.z - a.z, d2 = dx * dx + dz * dz;
-      if (d2 >= Z_SPACE * Z_SPACE || d2 < 1e-6) continue;
-      const d = Math.sqrt(d2), push = (Z_SPACE - d) / 2 / d;
+      const sp = Z_SPACE * (zombies[i].userData.reach + zombies[k].userData.reach) / 2; // big ones keep more room
+      if (d2 >= sp * sp || d2 < 1e-6) continue;
+      const d = Math.sqrt(d2), push = (sp - d) / 2 / d;
       a.x -= dx * push; a.z -= dz * push;
       b.x += dx * push; b.z += dz * push;
     }
@@ -4202,9 +4329,10 @@ function separateZombies() {
     if (z.userData.climb >= 0) continue; // on the sill: the climb places it
     if (state.running) {
       const dx = z.position.x - player.position.x, dz = z.position.z - player.position.z, d = Math.hypot(dx, dz);
-      if (d < Z_CLOSE && d > 1e-6) { z.position.x += dx / d * (Z_CLOSE - d); z.position.z += dz / d * (Z_CLOSE - d); }
+      const close = Z_CLOSE * z.userData.reach;
+      if (d < close && d > 1e-6) { z.position.x += dx / d * (close - d); z.position.z += dz / d * (close - d); }
     }
-    pushOutOfSolids(z.position);
+    pushOutOfSolids(z.position, z.userData.radius);
   }
 }
 
@@ -4257,7 +4385,7 @@ function update(dt) {
         if (state.spawnTimer <= 0 && zombies.length < MAX_ALIVE) {
           // spawn 1-2 at a time, faster on higher waves
           const burst = 1 + (Math.random() < Math.min(0.6, state.wave * 0.08) ? 1 : 0);
-          for (let i = 0; i < burst && state.toSpawn > 0; i++) { spawnZombie(); state.toSpawn--; }
+          for (let i = 0; i < burst && state.queue.length > 0; i++) spawnNext();
           state.spawnTimer = Math.max(0.35, 1.4 - state.wave * 0.08);
         }
       } else if (zombies.length === 0) {
@@ -4317,11 +4445,11 @@ function update(dt) {
       const sx = b.position.x - px, sz = b.position.z - pz;
       const t = Math.max(0, Math.min(1, ((z.position.x - px) * sx + (z.position.z - pz) * sz) / (sx * sx + sz * sz || 1)));
       const dx = z.position.x - (px + sx * t), dz = z.position.z - (pz + sz * t);
-      if (dx * dx + dz * dz < 0.55) {
+      if (dx * dx + dz * dz < z.userData.hitR2) {
         z.userData.hp -= state.damage * (state.pDamage > 0 ? 2 : 1);
         hitZombie(z);
         // small knockback
-        z.position.addScaledVector(b.userData.dir, 0.25);
+        z.position.addScaledVector(b.userData.dir, z.userData.kb);
         if (z.userData.hp <= 0) { audio.zdeath(z.position); killZombie(z, j, b.userData.dir); }
         else audio.hit(z.position);
         b.userData.hits.add(z);
@@ -4345,6 +4473,8 @@ function update(dt) {
     else if (title.active) wanderZombie(z, dt);
   }
   if (state.running || title.active) separateZombies();
+  hud.bossBar.classList.toggle('on', !!bossRef && state.running);
+  if (bossRef) hud.bossFill.style.width = Math.max(0, bossRef.userData.hp / bossRef.userData.maxHp * 100) + '%';
 
   // --- particles ---
   for (let i = particles.length - 1; i >= 0; i--) {
